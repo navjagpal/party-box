@@ -57,14 +57,33 @@ class CatalogExists(webapp.RequestHandler):
 
 
 class NextSong(webapp.RequestHandler):
+  """Returns the next song to play and removes it from the list.
+
+  This isn't fully implemented. Right now it just returns a random song that has at least
+  one vote.
+  """
 
   def get(self):
-    songs = []
-    for song in model.Song.all():
-      songs.append(song)
-    song = random.choice(songs)
-    self.response.out.write(song.filename)
+    owner = users.User('nav@gmail.com')
+    catalog = self.request.get('catalog')
+    logging.info('Catalog for next song: %s' % catalog)
+    
+    query = model.MusicCatalog.all()
+    query.filter('owner = ', owner)
+    query.filter('name = ', catalog)
+    catalog = query.fetch(1)[0]
 
+    query = model.Vote.all()
+    query.filter('catalog = ', catalog)
+    c = []
+    for x in query:
+      c.append(x)
+
+    vote = random.choice(c)
+    name = vote.song.filename
+    vote.delete()
+    self.response.out.write(name)
+    
 
 application = webapp.WSGIApplication(
   [('/rpc/catalog/upload', UploadSonglist),

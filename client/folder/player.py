@@ -68,7 +68,8 @@ class FolderClient(object):
       urllib.urlencode(songs))
 
   def _PlayNextSong(self):
-    data = urllib2.urlopen('%s/rpc/nextsong' % self._server)
+    data = urllib2.urlopen('%s/rpc/nextsong?%s' % (
+      self._server, urllib.urlencode({'catalog': self._catalog})))
     filename = data.readline().strip()
     sound = NSSound.alloc()
     sound.initWithContentsOfFile_byReference_(
