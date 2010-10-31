@@ -1,0 +1,8 @@
+application: party-box
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /rpc/.*
+  script: rpc.py
