@@ -8,3 +8,4 @@ handlers:
   script: rpc.py
 - url: /jukebox/.*
   script: jukebox.py
+  login: required

@@ -13,6 +13,7 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 
 
 class PartyList(webapp.RequestHandler):
+  """Displays a list of parties/catalogs."""
 
   def get(self):
     query = model.MusicCatalog.all()
@@ -26,23 +27,24 @@ class PartyList(webapp.RequestHandler):
 
 
 class PartyView(webapp.RequestHandler):
+  """Displays the current playlist/votes and list of available songs."""
 
   def get(self):
-    user = users.User('nav@gmail.com')
-    catalog_name = self.request.get('catalog')
-    query = model.MusicCatalog.all()
-    query.filter('name = ', catalog_name)
-    catalog = query.fetch(1)[0]
+    user = users.get_current_user()
+    catalog_id = int(self.request.get('catalog'))
+    query = model.MusicCatalog.get_by_id([catalog_id])
+    catalog = query[0]
 
     query = model.Vote.all()
-    query.filter('user = ', user)
     query.filter('catalog = ', catalog)
     counts = {}
+    key_to_song = {}
     for vote in query:
-      counts[vote.song] = counts.get(vote.song, 0) + 1
+      counts[vote.song.key().id()] = counts.get(vote.song.key().id(), 0) + 1
+      key_to_song[vote.song.key().id()] = vote.song
     votes = []
-    for (song, count) in counts.iteritems():
-      votes.append({'song': song, 'count': count})
+    for (id, count) in counts.iteritems():
+      votes.append({'song': key_to_song[id], 'count': count})
     logging.info('Votes = %s', votes)
 
     query = model.Song.all()
@@ -61,11 +63,11 @@ class PartyView(webapp.RequestHandler):
 class PartyVote(webapp.RequestHandler):
 
   def get(self):
-    filename = self.request.get('filename')
-    user = users.User('nav@gmail.com')
-    query = model.Song.all()
-    query.filter('filename = ', filename)
-    song = query.fetch(1)[0]
+    user = users.get_current_user()
+    song_id = int(self.request.get('song'))
+    query = model.Song.get_by_id([song_id])
+    song = query[0]
+   
     query = model.Vote.all()
     query.filter('user = ', user)
     query.filter('song = ', song)

@@ -2,9 +2,9 @@
   <head>
     <script type="text/javascript">
     <!--
-    function vote(filename) {
+    function vote(song_id) {
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", "/jukebox/vote?filename=" + encodeURIComponent(filename), false);
+      xhr.open("GET", "/jukebox/vote?song=" + encodeURIComponent(song_id), false);
       xhr.send(null);
     }
     //-->
@@ -16,7 +16,7 @@
   {% endfor %}
   Songs:<br/>
   {% for song in songs %}
-    <div onclick="javascript:vote('{{song.filename}}')">
+    <div onclick="javascript:vote('{{song.key.id}}')">
       {{song.filename}}
    </div><br/>
   {% endfor %}
