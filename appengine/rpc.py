@@ -1,19 +1,13 @@
+"""Handles /rpc requests from clients."""
+
 import logging
+import model
 import random
+
 from google.appengine.api import users
+from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
-from google.appengine.ext import db
-
-class MusicCatalog(db.Model):
-  name = db.StringProperty(required=True)
-  owner = db.UserProperty(required=True)
-
-
-class Song(db.Model):
-  filename = db.StringProperty(required=True)
-  catalog = db.ReferenceProperty(MusicCatalog)
-
 
 class UploadSonglist(webapp.RequestHandler):
 
@@ -22,10 +16,10 @@ class UploadSonglist(webapp.RequestHandler):
     name = self.request.get('catalog')
     songs = self.request.get('songs', allow_multiple=True)
     logging.info('Songs = %s', songs)
-    catalog = MusicCatalog(name=name, owner=user)
+    catalog = model.MusicCatalog(name=name, owner=user)
     catalog.put()
     for song in songs:
-      s = Song(filename=song.strip(), catalog=catalog)
+      s = model.Song(filename=song.strip(), catalog=catalog)
       s.put()
 
 
@@ -34,7 +28,7 @@ class ClearCatalog(webapp.RequestHandler):
   def get(self):
     name = self.request.get('catalog')
     owner = users.User('nav@gmail.com')
-    query = MusicCatalog.all()
+    query = model.MusicCatalog.all()
     query.filter('owner = ', owner)
     query.filter('name = ', name)
     for catalog in query:
@@ -50,7 +44,7 @@ class CatalogExists(webapp.RequestHandler):
   def get(self):
     name = self.request.get('catalog')
     owner = users.User('nav@gmail.com')
-    query = MusicCatalog.all()
+    query = model.MusicCatalog.all()
     query.filter('owner = ', owner)
     query.filter('name = ', name)
     c = []
@@ -66,7 +60,7 @@ class NextSong(webapp.RequestHandler):
 
   def get(self):
     songs = []
-    for song in Song.all():
+    for song in model.Song.all():
       songs.append(song)
     song = random.choice(songs)
     self.response.out.write(song.filename)

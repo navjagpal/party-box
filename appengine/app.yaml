@@ -6,3 +6,5 @@ api_version: 1
 handlers:
 - url: /rpc/.*
   script: rpc.py
+- url: /jukebox/.*
+  script: jukebox.py

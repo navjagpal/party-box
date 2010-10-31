@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <script type="text/javascript">
+    <!--
+    function vote(filename) {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "/jukebox/vote?filename=" + encodeURIComponent(filename), false);
+      xhr.send(null);
+    }
+    //-->
+    </script>
+  </head>
+  <body>
+  {% for vote in votes %}
+    {{vote.song.filename}} - {{vote.count}}<br/>
+  {% endfor %}
+  Songs:<br/>
+  {% for song in songs %}
+    <div onclick="javascript:vote('{{song.filename}}')">
+      {{song.filename}}
+   </div><br/>
+  {% endfor %}
+  </body>
+</html>
