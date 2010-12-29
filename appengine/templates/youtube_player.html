@@ -1,0 +1,64 @@
+<html>
+<head>
+  <title></title>
+
+  <script type="text/javascript"
+    src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
+
+  <script type="text/javascript">
+
+  var ytplayer = null;
+  SetupYouTubePlayer();
+
+  function SetupYouTubePlayer() {
+    var params = { allowScriptAccess: "always" };
+    var atts = { id: "myytplayer" };
+    swfobject.embedSWF("http://www.youtube.com/v/dn8rxxNtP7U?enablejsapi=1&playerapiid=ytplayer",
+      "ytapiplayer", "1280", "720", "8", null, null, params, atts);
+  }
+
+  function onYouTubePlayerReady(playerId) {
+    ytplayer = document.getElementById('myytplayer');
+    ytplayer.addEventListener("onStateChange", "onYouTubeStateChange");
+    ytplayer.addEventListener("onError", "onYouTubeError");
+    PlayNextSong();
+  }
+
+  function onYouTubeStateChange(newState) {
+    if (newState == 0) {
+      PlayNextSong();
+    }
+  }
+
+  function onYouTubeError(code) {
+    alert("Error: " + code);
+  }
+
+  function PlayNextSong() {
+    var req = new XMLHttpRequest();
+    req.open('GET', '/youtube/player/next', true);
+    req.onreadystatechange = function() {
+      if (req.readyState == 4 && req.status == 200) {
+        var response = JSON.parse(req.responseText);
+        ytplayer.loadVideoByUrl(response.url);
+      }
+    }
+    req.send(null);
+  }
+
+  </script>
+</head>
+
+<body>
+
+<div id="ytapiplayer">
+  You need Flash Player 8+ and JavaScript enabled to view this video.
+</div>
+
+<div>
+  <button type="button" onclick="javascript:PlayNextSong()">Next</button>
+</div>
+
+</body>
+
+</html>

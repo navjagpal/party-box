@@ -54,3 +54,14 @@ def increment(name):
     counter.put()
   db.run_in_transaction(txn)
   memcache.incr(name)
+
+
+def delete_counter(name):
+  config = GeneralCounterShardConfig.get_by_key_name(name)
+  if not config:
+    return
+  # TODO(nav): Does this need to run in a txn?
+  for counter in GeneralCounterShard.all().filter('name = ', name):
+    counter.delete()
+  config.delete()
+  memcache.delete(name)

@@ -19,12 +19,20 @@ class Main(webapp.RequestHandler):
     self.response.out.write(template.render(path, {}))
 
 
+class Player(webapp.RequestHandler):
+
+  def get(self):
+    path = os.path.join(os.path.dirname(__file__),
+      'templates/youtube_player.html')
+    self.response.out.write(template.render(path, {}))
+  
+
 class Search(webapp.RequestHandler):
 
   def get(self):
     query = self.request.get('q', None)
     if query is None:
-      self.error(404)  # TODO(nav): Better error.
+      return self.error(404)  # TODO(nav): Better error.
     
     yt_service = gdata.youtube.service.YouTubeService()
     yt_query = gdata.youtube.service.YouTubeVideoQuery()
@@ -49,28 +57,47 @@ class Add(webapp.RequestHandler):
   def get(self):
     url = self.request.get('url', None)
     if url is None:
-      self.error(404)  # TODO(nav): Better error.
+      return self.error(404)  # TODO(nav): Better error.
    
     model.increment(url) 
     self.response.out.write('OK')
 
 
+def GetSortedPlaylist():
+  configs = model.GeneralCounterShardConfig.all()
+  results = []
+  for config in configs:
+    results.append((config.name, model.get_count(config.name)))
+  results.sort(lambda x, y: cmp(y[1], x[1]))
+  return results
+
+
 class Playlist(webapp.RequestHandler):
 
   def get(self):
-    configs = model.GeneralCounterShardConfig.all()
-    results = []
-    for config in configs:
-      results.append((config.name, model.get_count(config.name)))
-    results.sort(lambda x, y: cmp(y[1], x[1]))
+    results = GetSortedPlaylist()
     self.response.out.write(simplejson.dumps(results))
 
+
+class NextSong(webapp.RequestHandler):
+
+  def get(self):
+    songs = GetSortedPlaylist()
+    if not songs:
+      return self.error(404)  # TODO(nav): Better error.
+
+    model.delete_counter(songs[0][0])
+    result = {'url': songs[0][0]}
+    self.response.out.write(simplejson.dumps(result))
+  
 
 application = webapp.WSGIApplication(
   [('/youtube', Main),
    ('/youtube/search', Search),
    ('/youtube/add', Add),
-   ('/youtube/playlist', Playlist)], debug=True)
+   ('/youtube/playlist', Playlist),
+   ('/youtube/player', Player),
+   ('/youtube/player/next', NextSong)], debug=True)
 
 
 def main():
