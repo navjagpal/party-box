@@ -9,6 +9,6 @@ handlers:
 - url: /jukebox/.*
   script: jukebox.py
   login: required
-- url: /youtube/.*
-  script: youtube/playlist.py
+- url: /youtube.*
+  script: youtube.py
   login: required
