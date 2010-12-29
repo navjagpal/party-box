@@ -53,12 +53,24 @@ class Add(webapp.RequestHandler):
    
     model.increment(url) 
     self.response.out.write('OK')
-   
+
+
+class Playlist(webapp.RequestHandler):
+
+  def get(self):
+    configs = model.GeneralCounterShardConfig.all()
+    results = []
+    for config in configs:
+      results.append((config.name, model.get_count(config.name)))
+    results.sort(lambda x, y: cmp(y[1], x[1]))
+    self.response.out.write(simplejson.dumps(results))
+
 
 application = webapp.WSGIApplication(
   [('/youtube', Main),
    ('/youtube/search', Search),
-   ('/youtube/add', Add)], debug=True)
+   ('/youtube/add', Add),
+   ('/youtube/playlist', Playlist)], debug=True)
 
 
 def main():
