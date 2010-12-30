@@ -22,6 +22,10 @@ class Vote(db.Model):
   catalog = db.ReferenceProperty(MusicCatalog)
 
 
+class Playlist(db.Model):
+  owner = db.UserProperty(required=True)
+
+
 class GeneralCounterShardConfig(db.Model):
   name = db.StringProperty(required=True)
   num_shards = db.IntegerProperty(required=True, default=5)

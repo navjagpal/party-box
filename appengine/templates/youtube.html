@@ -39,7 +39,7 @@
   function AddToPlaylist(url) {
     if (url == undefined)
       url = current_url;
-    var query = 'url=' + encodeURIComponent(url);
+    var query = 'p=' + encodeURIComponent("{{playlist}}") + '&url=' + encodeURIComponent(url);
     var req = new XMLHttpRequest();
     req.open('GET', '/youtube/add?' + query, true);
     req.onreadystatechange = function() {
@@ -109,7 +109,8 @@
 
   function DoGetPlaylist() {
     var req = new XMLHttpRequest();
-    req.open('GET', '/youtube/playlist', true);
+    var query = 'p=' + encodeURIComponent("{{playlist}}");
+    req.open('GET', '/youtube/playlist?' + query, true);
     req.onreadystatechange = function() {
       if (req.readyState == 4 && req.status == 200) {
         var response = JSON.parse(req.responseText);

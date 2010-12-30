@@ -8,6 +8,7 @@ from django.utils import simplejson
 import gdata.youtube
 import gdata.youtube.service
 
+from google.appengine.api import users
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -15,17 +16,32 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 class Main(webapp.RequestHandler):
 
   def get(self):
+    playlist_key = self.request.get('p', None)
+    if playlist_key is None:
+      logging.error('No playlist_key provided.')
+      return self.error(404)  # TODO(nav): Better error.
+
+    logging.info('Got key %s', playlist_key)
+    playlist = model.Playlist.get(playlist_key)
+    if not playlist:
+      logging.error('Invalid playlist_key')
+      return self.error(404)  # TODO(nav): Better error.
+
     path = os.path.join(os.path.dirname(__file__),
       'templates/youtube.html')
-    self.response.out.write(template.render(path, {}))
+    self.response.out.write(
+      template.render(path, {'playlist': playlist_key}))
 
 
 class Player(webapp.RequestHandler):
 
   def get(self):
+    user = users.get_current_user()
+    playlist = model.Playlist.get_or_insert(user.user_id(), owner=user)
     path = os.path.join(os.path.dirname(__file__),
       'templates/youtube_player.html')
-    self.response.out.write(template.render(path, {}))
+    self.response.out.write(
+      template.render(path, {'playlist': str(playlist.key())}))
   
 
 class Search(webapp.RequestHandler):
@@ -57,7 +73,8 @@ class Add(webapp.RequestHandler):
 
   def get(self):
     url = self.request.get('url', None)
-    if url is None:
+    playlist_key = self.request.get('p', None)
+    if not url or not playlist_key:
       return self.error(404)  # TODO(nav): Better error.
    
     model.increment(url) 
@@ -76,6 +93,10 @@ def GetSortedPlaylist():
 class Playlist(webapp.RequestHandler):
 
   def get(self):
+    playlist_key = self.request.get('p', None)
+    if playlist_key is None:
+      return self.error(404)  # TODO(nav): Better error.
+
     results = GetSortedPlaylist()
     self.response.out.write(simplejson.dumps(results))
 
@@ -83,6 +104,12 @@ class Playlist(webapp.RequestHandler):
 class NextSong(webapp.RequestHandler):
 
   def get(self):
+    user = users.get_current_user()
+    playlist = model.Playlist.get_by_key_name(user.user_id())
+    if not playlist:
+      # This shouldn't happen since the user has already hit the player.
+      return self.error(404)  # TODO(nav): Better error.
+
     songs = GetSortedPlaylist()
     if not songs:
       self.redirect('/youtube/player/randomsong')
