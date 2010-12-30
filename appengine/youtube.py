@@ -1,6 +1,7 @@
 import logging
 import model
 import os
+import random
 
 from django.utils import simplejson
 
@@ -84,12 +85,29 @@ class NextSong(webapp.RequestHandler):
   def get(self):
     songs = GetSortedPlaylist()
     if not songs:
-      return self.error(404)  # TODO(nav): Better error.
+      self.redirect('/youtube/player/randomsong')
+    else:
+      model.delete_counter(songs[0][0])
+      result = {'url': songs[0][0]}
+      self.response.out.write(simplejson.dumps(result))
 
-    model.delete_counter(songs[0][0])
-    result = {'url': songs[0][0]}
-    self.response.out.write(simplejson.dumps(result))
+
+class RandomPopularSong(webapp.RequestHandler):
+  """Provides a random popular YouTube video.
+
+  This is so we can offer a song even if the playlist is empty. There should
+  be different sources, Last.fm for example.
+  """
+
+  def get(self):
+    yt_service = gdata.youtube.service.YouTubeService()
+    feed = yt_service.GetYouTubeVideoFeed(
+      'http://gdata.youtube.com/feeds/api/videos/-/Music/?orderby=viewCount')
   
+    entry = random.choice(feed.entry)  
+    result = {'url': entry.GetSwfUrl()}
+    self.response.out.write(simplejson.dumps(result))
+
 
 application = webapp.WSGIApplication(
   [('/youtube', Main),
@@ -97,7 +115,8 @@ application = webapp.WSGIApplication(
    ('/youtube/add', Add),
    ('/youtube/playlist', Playlist),
    ('/youtube/player', Player),
-   ('/youtube/player/next', NextSong)], debug=True)
+   ('/youtube/player/next', NextSong),
+   ('/youtube/player/randomsong', RandomPopularSong)], debug=True)
 
 
 def main():
