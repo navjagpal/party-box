@@ -29,6 +29,7 @@ class Playlist(db.Model):
 class GeneralCounterShardConfig(db.Model):
   name = db.StringProperty(required=True)
   num_shards = db.IntegerProperty(required=True, default=5)
+  playlist = db.ReferenceProperty(Playlist, required=True)
 
 
 class GeneralCounterShard(db.Model):
@@ -46,8 +47,10 @@ def get_count(name):
   return int(total)
 
 
-def increment(name):
-  config = GeneralCounterShardConfig.get_or_insert(name, name=name)
+def increment(playlist, name):
+  if isinstance(playlist, (str, unicode)):
+    playlist = Playlist.get(playlist)
+  config = GeneralCounterShardConfig.get_or_insert(name, name=name, playlist=playlist)
   def txn():
     index = random.randint(0, config.num_shards - 1)
     shard_name = name + str(index)

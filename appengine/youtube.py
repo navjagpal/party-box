@@ -13,6 +13,36 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 
+
+def GetCounterName(playlist_key, url):
+  """Returns name for counter based on playlist and URL info.
+
+  Args:
+    playlist_key: playlist key (str) or Playlist object.
+    url: YouTube video URL.
+  Returns:
+    Name suitable to use for calling model.increment()
+  """
+  if not isinstance(playlist_key, (str, unicode)):
+    playlist_key = str(playlist_key.key())
+  return '%s%s' % (playlist_key, url)
+
+
+def GetUrlFromCounterName(playlist_key, counter_name):
+  """Returns URL from the playlist_key.
+
+  Args:
+    playlist_key: playlist key (str) or Playlist object.
+    counter_name: Full counter name.
+  Returns:
+    YouTube video URL.
+  """ 
+  if not isinstance(playlist_key, (str, unicode)):
+    playlist_key = str(playlist_key.key())
+  logging.info('Key = %s', playlist_key)
+  return counter_name.split(playlist_key, 1)[1]
+
+
 class Main(webapp.RequestHandler):
 
   def get(self):
@@ -21,7 +51,6 @@ class Main(webapp.RequestHandler):
       logging.error('No playlist_key provided.')
       return self.error(404)  # TODO(nav): Better error.
 
-    logging.info('Got key %s', playlist_key)
     playlist = model.Playlist.get(playlist_key)
     if not playlist:
       logging.error('Invalid playlist_key')
@@ -77,15 +106,19 @@ class Add(webapp.RequestHandler):
     if not url or not playlist_key:
       return self.error(404)  # TODO(nav): Better error.
    
-    model.increment(url) 
+    model.increment(playlist_key, GetCounterName(playlist_key, url)) 
     self.response.out.write('OK')
 
 
-def GetSortedPlaylist():
-  configs = model.GeneralCounterShardConfig.all()
+def GetSortedPlaylist(playlist):
+  if isinstance(playlist, (str, unicode)):
+    playlist = model.Playlist.get(playlist)
+  configs = model.GeneralCounterShardConfig.all().filter(
+    'playlist =', playlist)
   results = []
   for config in configs:
-    results.append((config.name, model.get_count(config.name)))
+    results.append((GetUrlFromCounterName(
+      playlist, config.name), model.get_count(config.name)))
   results.sort(lambda x, y: cmp(y[1], x[1]))
   return results
 
@@ -97,7 +130,7 @@ class Playlist(webapp.RequestHandler):
     if playlist_key is None:
       return self.error(404)  # TODO(nav): Better error.
 
-    results = GetSortedPlaylist()
+    results = GetSortedPlaylist(playlist_key)
     self.response.out.write(simplejson.dumps(results))
 
 
@@ -110,11 +143,11 @@ class NextSong(webapp.RequestHandler):
       # This shouldn't happen since the user has already hit the player.
       return self.error(404)  # TODO(nav): Better error.
 
-    songs = GetSortedPlaylist()
+    songs = GetSortedPlaylist(playlist)
     if not songs:
       self.redirect('/youtube/player/randomsong')
     else:
-      model.delete_counter(songs[0][0])
+      model.delete_counter(GetCounterName(playlist, songs[0][0]))
       result = {'url': songs[0][0]}
       self.response.out.write(simplejson.dumps(result))
 

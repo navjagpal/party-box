@@ -17,6 +17,16 @@
       "ytapiplayer", "1280", "720", "8", null, null, params, atts);
   }
 
+  function SetSharingUrl() {
+    var link = document.createElement('a');
+    var url = window.location.protocol + '//' + window.location.host +
+      '/youtube?p={{playlist}}';
+    link.setAttribute('href', url);
+    link.setAttribute('target', '_blank');
+    link.appendChild(document.createTextNode(url));
+    document.getElementById('sharing_url').appendChild(link);
+  }
+
   function onYouTubePlayerReady(playerId) {
     ytplayer = document.getElementById('myytplayer');
     ytplayer.addEventListener("onStateChange", "onYouTubeStateChange");
@@ -51,9 +61,12 @@
 
 <body>
 
-<div>
-Sharing Link: http://localhost:8080/youtube?p={{playlist}}
+<div id="sharing_url">
 </div>
+
+<script type="text/javascript">
+SetSharingUrl();
+</script>
 
 <div id="ytapiplayer">
   You need Flash Player 8+ and JavaScript enabled to view this video.
