@@ -80,23 +80,27 @@ class Search(webapp.RequestHandler):
     query = self.request.get('q', None)
     if query is None:
       return self.error(404)  # TODO(nav): Better error.
+   
+    results = memcache.get('youtube-search:%s' % query)
+    if results is None: 
+      yt_service = gdata.youtube.service.YouTubeService()
+      yt_query = gdata.youtube.service.YouTubeVideoQuery()
+      yt_query.vq = query
+      yt_query.orderby = 'relevance'
+      yt_query.racy = 'include'
+      yt_query.categories.append('/Music')
+      feed = yt_service.YouTubeQuery(yt_query)
     
-    yt_service = gdata.youtube.service.YouTubeService()
-    yt_query = gdata.youtube.service.YouTubeVideoQuery()
-    yt_query.vq = query
-    yt_query.orderby = 'relevance'
-    yt_query.racy = 'include'
-    yt_query.categories.append('/Music')
-    feed = yt_service.YouTubeQuery(yt_query)
-    
-    results = []
-    for entry in feed.entry:
-      title = entry.media.title.text
-      url = entry.GetSwfUrl()
-      thumbnails = [x.url for x in entry.media.thumbnail]
-      results.append({'title': title, 'url': url,
-                      'thumbnails': thumbnails})
-    self.response.out.write(simplejson.dumps(results))
+      results = []
+      for entry in feed.entry:
+        title = entry.media.title.text
+        url = entry.GetSwfUrl()
+        thumbnails = [x.url for x in entry.media.thumbnail]
+        results.append({'title': title, 'url': url,
+                        'thumbnails': thumbnails})
+      results = simplejson.dumps(results)
+      memcache.add('youtube-search:%s' % query, results)
+    self.response.out.write(results)
 
 
 class Add(webapp.RequestHandler):
