@@ -8,6 +8,7 @@ from django.utils import simplejson
 import gdata.youtube
 import gdata.youtube.service
 
+from google.appengine.api import memcache
 from google.appengine.api import users
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
@@ -160,9 +161,12 @@ class RandomPopularSong(webapp.RequestHandler):
   """
 
   def get(self):
-    yt_service = gdata.youtube.service.YouTubeService()
-    feed = yt_service.GetYouTubeVideoFeed(
-      'http://gdata.youtube.com/feeds/api/videos/-/Music/?orderby=viewCount')
+    feed = memcache.get('popular-youtube-feed')
+    if feed is None:
+      yt_service = gdata.youtube.service.YouTubeService()
+      feed = yt_service.GetYouTubeVideoFeed(
+        'http://gdata.youtube.com/feeds/api/videos/-/Music/?orderby=viewCount')
+      memcache.add('popular-youtube-feed', feed)
   
     entry = random.choice(feed.entry)  
     result = {'url': entry.GetSwfUrl()}
