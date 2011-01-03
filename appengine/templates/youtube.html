@@ -9,6 +9,7 @@
 
   var ytplayer = null;
   var current_url = null;
+  var current_title = null;
   SetupYouTubePlayer();
   DoGetPlaylist();
 
@@ -27,19 +28,24 @@
     document.getElementById('results').innerHTML = '';
   }
 
-  function SetVideo(url) {
+  function SetVideo(url, title) {
     // We store the url instead of getting it from the player because the one
     // returned from the player sometimes contains additional information like
     // how far in the movie to go.
     // TODO(nav): Use ytplayer.GetSwfUrl() and extract the ID. Use ID instead of URL.
     ytplayer.loadVideoByUrl(url);
     current_url = url;
+    current_title = title;
   }
 
-  function AddToPlaylist(url) {
+  function AddToPlaylist(url, title) {
     if (url == undefined)
       url = current_url;
-    var query = 'p=' + encodeURIComponent("{{playlist}}") + '&url=' + encodeURIComponent(url);
+    if (title == undefined)
+      title = current_title;
+    var query = 'p=' + encodeURIComponent("{{playlist}}") +
+      '&url=' + encodeURIComponent(url) +
+      '&title=' + encodeURIComponent(title);
     var req = new XMLHttpRequest();
     req.open('GET', '/youtube/add?' + query, true);
     req.onreadystatechange = function() {
@@ -56,14 +62,14 @@
     row.appendChild(document.createElement('div')
       .appendChild(document.createTextNode(title)));
     row.onclick = function() {
-      SetVideo(url);
+      SetVideo(url, title);
     }
     document.getElementById('results').appendChild(row);
   }
 
   function UpdateSearchResults(results) { 
     ClearResultsList();
-    SetVideo(results[0].url);
+    SetVideo(results[0].url, results[0].title);
     for (x in results) {
       AppendToResultsList(results[x].title, results[x].url,
         results[x].thumbnails);
@@ -90,12 +96,12 @@
     document.getElementById('playlist').innerHTML = '';
   }
 
-  function AppendToPlaylist(name, count) {
+  function AppendToPlaylist(url, title, count) {
     var row = document.createElement('div');
     row.appendChild(document.createElement('div')
-      .appendChild(document.createTextNode(name + "," + count)));
+      .appendChild(document.createTextNode(title + "," + count)));
     row.onclick = function() {
-      AddToPlaylist(name);
+      AddToPlaylist(url, title);
     }
     document.getElementById('playlist').appendChild(row);
   }
@@ -103,7 +109,8 @@
   function UpdatePlaylist(results) {
     ClearPlaylist();
     for (x in results) {
-      AppendToPlaylist(results[x][0], results[x][1]);
+      AppendToPlaylist(results[x]['url'], results[x]['title'],
+                       results[x]['count'])
     }
   }
 

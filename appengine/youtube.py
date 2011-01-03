@@ -107,11 +107,13 @@ class Add(webapp.RequestHandler):
 
   def get(self):
     url = self.request.get('url', None)
+    title = self.request.get('title', None)
     playlist_key = self.request.get('p', None)
-    if not url or not playlist_key:
+    if not url or not title or not playlist_key:
       return self.error(404)  # TODO(nav): Better error.
    
     model.increment(playlist_key, GetCounterName(playlist_key, url)) 
+    model.YouTubeVideo.get_or_insert(url, url=url, title=title)
     self.response.out.write('OK')
 
 
@@ -122,9 +124,15 @@ def GetSortedPlaylist(playlist):
     'playlist =', playlist)
   results = []
   for config in configs:
-    results.append((GetUrlFromCounterName(
-      playlist, config.name), model.get_count(config.name)))
-  results.sort(lambda x, y: cmp(y[1], x[1]))
+    url = GetUrlFromCounterName(playlist, config.name)
+    title = memcache.get('youtube-title:%s' % url)
+    if title is None:
+      video = model.YouTubeVideo.get_by_key_name(url)
+      title = video.title
+      memcache.add('youtube-title:%s' % url, title)
+    results.append({'url': url, 'title': title,
+                    'count': model.get_count(config.name)})
+  results.sort(lambda x, y: cmp(y['count'], x['count']))
   return results
 
 
@@ -152,8 +160,8 @@ class NextSong(webapp.RequestHandler):
     if not songs:
       self.redirect('/youtube/player/randomsong')
     else:
-      model.delete_counter(GetCounterName(playlist, songs[0][0]))
-      result = {'url': songs[0][0]}
+      model.delete_counter(GetCounterName(playlist, songs[0]['url']))
+      result = {'url': songs[0]['url']}
       self.response.out.write(simplejson.dumps(result))
 
 
