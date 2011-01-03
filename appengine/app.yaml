@@ -12,3 +12,6 @@ handlers:
 - url: /youtube.*
   script: youtube.py
   login: required
+- url: /admin/.*
+  script: admin.py
+  login: admin
