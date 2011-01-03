@@ -135,7 +135,7 @@
 <button type="button" onClick="javascript:AddToPlaylist()">Add To Playlist</button>
 
 <div>
-  <input type="text" id="search" size="100"/>
+  <input type="text" id="search" size="100" onkeydown="if (event.keyCode == 13) DoSearch()"/>
   <button type="button" onClick="javascript:DoSearch()">Search</button>
 </div>
 
