@@ -336,7 +336,6 @@ ul.topMenuItems {
   );
   filter:  progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#222222', endColorstr='#000000'); /* IE6 & IE7 */
   -ms-filter: "progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#222222', endColorstr='#000000')"; /* IE8 */  
-  cursor: pointer;    
 }
 
 .songBox:hover, #moreSongs:hover {

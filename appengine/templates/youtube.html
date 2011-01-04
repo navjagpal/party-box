@@ -3,6 +3,9 @@
   <title></title>
 
   <script type="text/javascript"
+    src="/static/partybox.js"></script>
+
+  <script type="text/javascript"
     src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
 
   <script type="text/javascript">
@@ -11,7 +14,7 @@
   var current_url = null;
   var current_title = null;
   SetupYouTubePlayer();
-  DoGetPlaylist();
+  DoGetPlaylist("{{playlist}}", UpdatePlaylist);
 
   function SetupYouTubePlayer() {
     var params = { allowScriptAccess: "always" };
@@ -56,8 +59,9 @@
         if (response.message) {
           alert(response.message);
         }
-        DoGetPlaylist();  // TODO(nav): Update the list differently, maybe using
-                          // a timer or the channel API.
+        // TODO(nav): Update the list differently, maybe using
+        // a timer or the channel API.
+        DoGetPlaylist("{{playlist}}", UpdatePlaylist);
       }
     }
     req.send(null);
@@ -118,19 +122,6 @@
       AppendToPlaylist(results[x]['url'], results[x]['title'],
                        results[x]['count'])
     }
-  }
-
-  function DoGetPlaylist() {
-    var req = new XMLHttpRequest();
-    var query = 'p=' + encodeURIComponent("{{playlist}}");
-    req.open('GET', '/youtube/playlist?' + query, true);
-    req.onreadystatechange = function() {
-      if (req.readyState == 4 && req.status == 200) {
-        var response = JSON.parse(req.responseText);
-        UpdatePlaylist(response);
-      }
-    }
-    req.send(null);
   }
   </script>
 </head>

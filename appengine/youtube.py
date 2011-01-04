@@ -72,7 +72,7 @@ class Player(webapp.RequestHandler):
       'templates/youtube_player.html')
     self.response.out.write(
       template.render(path, {'playlist': str(playlist.key())}))
-  
+
 
 class Search(webapp.RequestHandler):
 

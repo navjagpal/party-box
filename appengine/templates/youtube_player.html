@@ -6,18 +6,33 @@
     href="/static/style.css" title="default"/>
 
   <script type="text/javascript"
+    src="/static/partybox.js"></script>
+
+  <script type="text/javascript"
     src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
 
   <script type="text/javascript">
 
   var ytplayer = null;
   SetupYouTubePlayer();
+  DoGetPlaylist("{{playlist}}", UpdatePlaylist);
 
   function SetupYouTubePlayer() {
     var params = { allowScriptAccess: "always" };
     var atts = { id: "myytplayer" };
     swfobject.embedSWF("http://www.youtube.com/v/dn8rxxNtP7U?enablejsapi=1&playerapiid=ytplayer",
       "playback", "1280", "720", "8", null, null, params, atts);
+  }
+
+  function UpdatePlaylist(results) {
+    var songBoxes = document.getElementById('songBoxes');
+    songBoxes.innerHTML = '';
+    for (x in results) {
+      var row = document.createElement('div');
+      row.setAttribute('class', 'songBox');
+      row.appendChild(document.createTextNode(results[x]['title']));
+      songBoxes.appendChild(row);
+    }
   }
 
   function SetSharingUrl() {
@@ -56,6 +71,9 @@
       if (req.readyState == 4 && req.status == 200) {
         var response = JSON.parse(req.responseText);
         ytplayer.loadVideoByUrl(response.url);
+
+        // Update the playlist.
+        DoGetPlaylist("{{playlist}}", UpdatePlaylist);
       }
     }
     req.send(null);
