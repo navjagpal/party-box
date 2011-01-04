@@ -3,15 +3,19 @@ version: 1
 runtime: python
 api_version: 1
 
+# TODO(nav): Remove admin login for all and replace with appropriate
+# permissions. This is temporary so we can deploy to appengine and
+# restrict to owners for development testing.
 handlers:
 - url: /rpc/.*
   script: rpc.py
+  login: admin
 - url: /jukebox/.*
   script: jukebox.py
-  login: required
+  login: admin
 - url: /youtube.*
   script: youtube.py
-  login: required
+  login: admin
 - url: /admin/.*
   script: admin.py
   login: admin
