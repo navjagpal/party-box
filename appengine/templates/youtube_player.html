@@ -2,6 +2,9 @@
 <head>
   <title></title>
 
+  <link rel="stylesheet" type="text/css"
+    href="/static/style.css" title="default"/>
+
   <script type="text/javascript"
     src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
 
@@ -14,7 +17,7 @@
     var params = { allowScriptAccess: "always" };
     var atts = { id: "myytplayer" };
     swfobject.embedSWF("http://www.youtube.com/v/dn8rxxNtP7U?enablejsapi=1&playerapiid=ytplayer",
-      "ytapiplayer", "1280", "720", "8", null, null, params, atts);
+      "playback", "1280", "720", "8", null, null, params, atts);
   }
 
   function SetSharingUrl() {
@@ -62,22 +65,42 @@
 </head>
 
 <body>
+  <div id="grBox">
 
-<div id="sharing_url">
-</div>
+    <div id="grBoxHeader">
+      <div id="sharing_url">
+      </div>
+      <script type="text/javascript">SetSharingUrl();</script>
+      <div id="grBoxHeaderRight">
+        Some Right Content
+      </div>
+    </div>
 
-<script type="text/javascript">
-SetSharingUrl();
-</script>
+    <div id="mainContent" style="width: 1920px; height: 1011px; ">
+      <div id="leftContent">
+        <div id="videoPlayerBox" style="height: 994px; width: 1454px; ">
+          <div id="videoPlayerHeader">
+            <div id="currSongTitle">
+              Current Song Title
+            </div>
+          </div>
+          <div id="playback">
+            You need Flash Player 8+ and JavaScript enabled to view this video.
+          </div>
+          <div>
+            <button type="button" onclick="javascript:PlayNextSong()">Next</button>
+          </div>
+        </div>
+      </div>
+      <div id="rightContent">
+        <div id="songBoxes" style="height: 936px; ">
+          <div class="songBox">Some Song Link</div>
+          <div class="songBox">Some Other Song</div>
+        </div>
+      </div>
+    </div>
 
-<div id="ytapiplayer">
-  You need Flash Player 8+ and JavaScript enabled to view this video.
-</div>
-
-<div>
-  <button type="button" onclick="javascript:PlayNextSong()">Next</button>
-</div>
-
+  </div>
 </body>
 
 </html>
