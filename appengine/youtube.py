@@ -111,9 +111,22 @@ class Add(webapp.RequestHandler):
     playlist_key = self.request.get('p', None)
     if not url or not title or not playlist_key:
       return self.error(404)  # TODO(nav): Better error.
-   
+
+    # Is the user trying to cast a duplicate vote?
+    playlist = model.Playlist.get(playlist_key)
+    user = users.get_current_user()
+    query = model.YouTubeVote.all().filter('playlist = ', playlist)
+    query.filter('user = ', user)
+    query.filter('url = ', url)
+    if query.fetch(1):
+      logging.info('User %s already voted for %s in playlist %s, not counting.',
+                   user, url, playlist_key)
+      return self.error(404)
+
     model.increment(playlist_key, GetCounterName(playlist_key, url)) 
     model.YouTubeVideo.get_or_insert(url, url=url, title=title)
+    vote = model.YouTubeVote(user=user, playlist=playlist, url=url)
+    vote.put()
     self.response.out.write('OK')
 
 

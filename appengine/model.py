@@ -31,6 +31,12 @@ class YouTubeVideo(db.Model):
   title = db.StringProperty(required=True)
 
 
+class YouTubeVote(db.Model):
+  user = db.UserProperty(required=True)
+  playlist = db.ReferenceProperty(Playlist, required=True)
+  url = db.StringProperty(required=True)
+
+
 class GeneralCounterShardConfig(db.Model):
   name = db.StringProperty(required=True)
   num_shards = db.IntegerProperty(required=True, default=5)
