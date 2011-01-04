@@ -121,13 +121,13 @@ class Add(webapp.RequestHandler):
     if query.fetch(1):
       logging.info('User %s already voted for %s in playlist %s, not counting.',
                    user, url, playlist_key)
-      return self.error(404)
-
-    model.increment(playlist_key, GetCounterName(playlist_key, url)) 
-    model.YouTubeVideo.get_or_insert(url, url=url, title=title)
-    vote = model.YouTubeVote(user=user, playlist=playlist, url=url)
-    vote.put()
-    self.response.out.write('OK')
+      self.response.out.write(simplejson.dumps({'message': 'Already voted for this song.'}))
+    else:
+      model.YouTubeVideo.get_or_insert(url, url=url, title=title)
+      model.increment(playlist_key, GetCounterName(playlist_key, url)) 
+      vote = model.YouTubeVote(user=user, playlist=playlist, url=url)
+      vote.put()
+      self.response.out.write('OK')
 
 
 def GetSortedPlaylist(playlist):

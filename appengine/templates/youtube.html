@@ -50,6 +50,10 @@
     req.open('GET', '/youtube/add?' + query, true);
     req.onreadystatechange = function() {
       if (req.readyState == 4 && req.status == 200) {
+        var response = JSON.parse(req.responseText);
+        if (response.message) {
+          alert(response.message);
+        }
         DoGetPlaylist();  // TODO(nav): Update the list differently, maybe using
                           // a timer or the channel API.
       }
