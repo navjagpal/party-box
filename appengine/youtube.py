@@ -174,6 +174,14 @@ class NextSong(webapp.RequestHandler):
       self.redirect('/youtube/player/randomsong')
     else:
       model.delete_counter(GetCounterName(playlist, songs[0]['url']))
+      # Delete all votes for this song too, so people can add this song back if they
+      # want to.
+      # TODO(nav): This could be an issue if there are many vote entries for a song
+      # because it could take too long to delete them all.
+      query = model.YouTubeVote.all().filter('playlist = ', playlist).filter(
+        'url = ', songs[0]['url'])
+      for result in query:
+        result.delete()
       result = {'url': songs[0]['url']}
       self.response.out.write(simplejson.dumps(result))
 
