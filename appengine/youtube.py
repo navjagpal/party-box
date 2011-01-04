@@ -44,6 +44,14 @@ def GetUrlFromCounterName(playlist_key, counter_name):
   return counter_name.split(playlist_key, 1)[1]
 
 
+def GetYouTubeService():
+  yt_service = gdata.youtube.service.YouTubeService()
+  yt_service.developer_key = ('AI39si6ZT0-zdQXj2cYiOeF5ccTbYN5Ve4pJ0GbN6QhCV'
+                              'KnTZvb-VpYfioFXeyGCjs-dHpCTQPjhwLY7xS2T_P_E1X'
+                              'YHUMv2fQ')
+  return yt_service
+
+
 class Main(webapp.RequestHandler):
 
   def get(self):
@@ -80,10 +88,10 @@ class Search(webapp.RequestHandler):
     query = self.request.get('q', None)
     if query is None:
       return self.error(404)  # TODO(nav): Better error.
-   
+
     results = memcache.get('youtube-search:%s' % query)
-    if results is None: 
-      yt_service = gdata.youtube.service.YouTubeService()
+    if results is None:
+      yt_service = GetYouTubeService()
       yt_query = gdata.youtube.service.YouTubeVideoQuery()
       yt_query.vq = query
       yt_query.orderby = 'relevance'
@@ -197,7 +205,7 @@ class RandomPopularSong(webapp.RequestHandler):
   def get(self):
     feed = memcache.get('popular-youtube-feed')
     if feed is None:
-      yt_service = gdata.youtube.service.YouTubeService()
+      yt_service = GetYouTubeService()
       feed = yt_service.GetYouTubeVideoFeed(
         'http://gdata.youtube.com/feeds/api/videos/-/Music/?orderby=viewCount')
       memcache.add('popular-youtube-feed', feed)
