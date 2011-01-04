@@ -41,7 +41,9 @@
   }
 
   function onYouTubeError(code) {
-    alert("Error: " + code);
+    // TODO(nav): Log an informative message to the console that there
+    // was an error, and that we're skipping the track.
+    PlayNextSong();
   }
 
   function PlayNextSong() {
