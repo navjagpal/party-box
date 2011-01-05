@@ -64,6 +64,14 @@
     PlayNextSong();
   }
 
+  function SetCurrentSongTitle(title) {
+    var e = document.getElementById('currSongTitle');
+    if (!e)
+      return;
+    e.innerHTML = '';
+    e.appendChild(document.createTextNode(title));
+  }
+
   function PlayNextSong() {
     var req = new XMLHttpRequest();
     req.open('GET', '/youtube/player/next', true);
@@ -71,6 +79,7 @@
       if (req.readyState == 4 && req.status == 200) {
         var response = JSON.parse(req.responseText);
         ytplayer.loadVideoByUrl(response.url);
+        SetCurrentSongTitle(response.title);
 
         // Update the playlist.
         DoGetPlaylist("{{playlist}}", UpdatePlaylist);
@@ -99,7 +108,6 @@
         <div id="videoPlayerBox" style="height: 994px; width: 1454px; ">
           <div id="videoPlayerHeader">
             <div id="currSongTitle">
-              Current Song Title
             </div>
           </div>
           <div id="playback">

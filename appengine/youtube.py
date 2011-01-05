@@ -211,7 +211,8 @@ class RandomPopularSong(webapp.RequestHandler):
       memcache.add('popular-youtube-feed', feed)
   
     entry = random.choice(feed.entry)  
-    result = {'url': entry.GetSwfUrl()}
+    result = {'url': entry.GetSwfUrl(),
+              'title': entry.media.title.text}
     self.response.out.write(simplejson.dumps(result))
 
 
