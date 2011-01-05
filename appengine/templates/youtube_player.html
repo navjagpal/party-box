@@ -17,14 +17,12 @@
   <script type="text/javascript">
 
   var ytplayer = null;
-  SetupYouTubePlayer();
-  DoGetPlaylist("{{playlist}}", UpdatePlaylist);
 
   function SetupYouTubePlayer() {
     var params = { allowScriptAccess: "always" };
     var atts = { id: "ytplayerObj" };
     swfobject.embedSWF("http://www.youtube.com/v/dn8rxxNtP7U?enablejsapi=1&playerapiid=ytplayer",
-      "playback", "1280", "720", "8", null, null, params, atts);
+      "playback", GetWidth(), GetHeight(), "8", null, null, params, atts);
   }
 
   function UpdatePlaylist(results) {
@@ -146,6 +144,8 @@
   $(document).ready(function() {
     AdjustSize();
     $(window).bind('resize', AdjustSize);
+    SetupYouTubePlayer();
+    DoGetPlaylist("{{playlist}}", UpdatePlaylist);
   });
 
   </script>
@@ -169,12 +169,12 @@
           <div id="videoPlayerHeader">
             <div id="currSongTitle">
             </div>
+            <div id="qualitySelector">
+              <button type="button" onclick="javascript:PlayNextSong()">Next</button>
+            </div>
           </div>
           <div id="playback">
             You need Flash Player 8+ and JavaScript enabled to view this video.
-          </div>
-          <div>
-            <button type="button" onclick="javascript:PlayNextSong()">Next</button>
           </div>
         </div>
       </div>
