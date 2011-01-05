@@ -116,6 +116,7 @@ class Add(webapp.RequestHandler):
   def get(self):
     url = self.request.get('url', None)
     title = self.request.get('title', None)
+    thumbnails = self.request.get('thumbnail', allow_multiple=True)
     playlist_key = self.request.get('p', None)
     if not url or not title or not playlist_key:
       return self.error(404)  # TODO(nav): Better error.
@@ -132,7 +133,9 @@ class Add(webapp.RequestHandler):
       self.response.out.write(simplejson.dumps(
         {'added': False, 'message': 'Already voted for this song.'}))
     else:
-      model.YouTubeVideo.get_or_insert(url, url=url, title=title)
+      model.YouTubeVideo.get_or_insert(
+        url, url=url, title=title,
+        thumbnails=thumbnails)
       model.increment(playlist_key, GetCounterName(playlist_key, url)) 
       vote = model.YouTubeVote(user=user, playlist=playlist, url=url)
       vote.put()
@@ -146,13 +149,11 @@ def GetSortedPlaylist(playlist):
     'playlist =', playlist)
   results = []
   for config in configs:
+    # TODO(nav): Consider caching title/thumbnail info.
     url = GetUrlFromCounterName(playlist, config.name)
-    title = memcache.get('youtube-title:%s' % url)
-    if title is None:
-      video = model.YouTubeVideo.get_by_key_name(url)
-      title = video.title
-      memcache.add('youtube-title:%s' % url, title)
-    results.append({'url': url, 'title': title,
+    video = model.YouTubeVideo.get_by_key_name(url)
+    results.append({'url': url, 'title': video.title,
+                    'thumbnails': video.thumbnails,
                     'count': model.get_count(config.name)})
   results.sort(lambda x, y: cmp(y['count'], x['count']))
   return results
@@ -191,7 +192,10 @@ class NextSong(webapp.RequestHandler):
         'url = ', songs[0]['url'])
       for result in query:
         result.delete()
-      result = {'url': songs[0]['url']}
+
+      video = model.YouTubeVideo.get_by_key_name(songs[0]['url'])
+      result = {'url': video.url, 'title': video.title,
+                'thumbnails': video.thumbnails}
       self.response.out.write(simplejson.dumps(result))
 
 

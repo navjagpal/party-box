@@ -37,12 +37,12 @@
     for (x in results) {
       var row = document.createElement('div');
       row.setAttribute('class', 'songBox');
-      if (results[x]['thumbnail']) {
+      if (results[x]['thumbnails'].length) {
         var thumbnail = document.createElement('div');
         thumbnail.setAttribute('class', 'songThumb');
         var image = document.createElement('img');
         image.setAttribute('class', 'thumbnail');
-        image.setAttribute('src', results[x]['thumbnail']);
+        image.setAttribute('src', results[x]['thumbnails'][0]);
         thumbnail.appendChild(image);
         row.appendChild(thumbnail);
       }

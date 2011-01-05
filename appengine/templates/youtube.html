@@ -13,6 +13,7 @@
   var ytplayer = null;
   var current_url = null;
   var current_title = null;
+  var current_thumbnails = null;
   SetupYouTubePlayer();
   DoGetPlaylist("{{playlist}}", UpdatePlaylist);
 
@@ -31,7 +32,7 @@
     document.getElementById('results').innerHTML = '';
   }
 
-  function SetVideo(url, title) {
+  function SetVideo(url, title, thumbnails) {
     // We store the url instead of getting it from the player because the one
     // returned from the player sometimes contains additional information like
     // how far in the movie to go.
@@ -39,18 +40,23 @@
     ytplayer.loadVideoByUrl(url);
     current_url = url;
     current_title = title;
+    current_thumbnails = thumbnails;
   }
 
-  function AddToPlaylist(url, title) {
+  function AddToPlaylist(url, title, thumbnails) {
     if (url == undefined)
       url = current_url;
     if (title == undefined)
       title = current_title;
+    if (thumbnails == undefined)
+      thumbnails = current_thumbnails;
     if (url == null)
       return;
     var query = 'p=' + encodeURIComponent("{{playlist}}") +
       '&url=' + encodeURIComponent(url) +
       '&title=' + encodeURIComponent(title);
+    if (thumbnails.length)
+      query = query + '&thumbnail=' + encodeURIComponent(thumbnails[0]);
     var req = new XMLHttpRequest();
     req.open('GET', '/youtube/add?' + query, true);
     req.onreadystatechange = function() {
@@ -72,14 +78,14 @@
     row.appendChild(document.createElement('div')
       .appendChild(document.createTextNode(title)));
     row.onclick = function() {
-      SetVideo(url, title);
+      SetVideo(url, title, thumbnails);
     }
     document.getElementById('results').appendChild(row);
   }
 
   function UpdateSearchResults(results) { 
     ClearResultsList();
-    SetVideo(results[0].url, results[0].title);
+    SetVideo(results[0].url, results[0].title, results[0].thumbnails);
     for (x in results) {
       AppendToResultsList(results[x].title, results[x].url,
         results[x].thumbnails);
