@@ -6,6 +6,9 @@
     href="/static/style.css" title="default"/>
 
   <script type="text/javascript"
+    src="/static/jquery-1.4.2.min.js"></script>
+
+  <script type="text/javascript"
     src="/static/partybox.js"></script>
 
   <script type="text/javascript"
@@ -19,7 +22,7 @@
 
   function SetupYouTubePlayer() {
     var params = { allowScriptAccess: "always" };
-    var atts = { id: "myytplayer" };
+    var atts = { id: "ytplayerObj" };
     swfobject.embedSWF("http://www.youtube.com/v/dn8rxxNtP7U?enablejsapi=1&playerapiid=ytplayer",
       "playback", "1280", "720", "8", null, null, params, atts);
   }
@@ -27,9 +30,22 @@
   function UpdatePlaylist(results) {
     var songBoxes = document.getElementById('songBoxes');
     songBoxes.innerHTML = '';
+    if (results.length == 0) {
+      songBoxes.appendChild(document.createTextNode('Playlist Empty'));
+      return;
+    }
     for (x in results) {
       var row = document.createElement('div');
       row.setAttribute('class', 'songBox');
+      if (results[x]['thumbnail']) {
+        var thumbnail = document.createElement('div');
+        thumbnail.setAttribute('class', 'songThumb');
+        var image = document.createElement('img');
+        image.setAttribute('class', 'thumbnail');
+        image.setAttribute('src', results[x]['thumbnail']);
+        thumbnail.appendChild(image);
+        row.appendChild(thumbnail);
+      }
       row.appendChild(document.createTextNode(results[x]['title']));
       songBoxes.appendChild(row);
     }
@@ -46,7 +62,7 @@
   }
 
   function onYouTubePlayerReady(playerId) {
-    ytplayer = document.getElementById('myytplayer');
+    ytplayer = document.getElementById('ytplayerObj');
     ytplayer.addEventListener("onStateChange", "onYouTubeStateChange");
     ytplayer.addEventListener("onError", "onYouTubeError");
     PlayNextSong();
@@ -88,6 +104,38 @@
     req.send(null);
   }
 
+  function GetHeight() {
+    // -25px for the margins / paddings
+    return $(window).height() - $("#grBoxHeader").height() - 
+           $("#videoPlayerHeader").height() - 20;
+  }
+
+  function GetWidth() {
+    // -something for the margins / paddings
+    return $(window).width() - $("#rightContent").width() - 25;
+  } 
+  
+  function AdjustVideoSize() {
+    $("#ytplayerObj").attr("height", GetHeight()); 
+    $("#ytplayerObj").attr("width", GetWidth()); 
+  }
+
+  function AdjustSize() {
+    var height = $(window).height() - $('#grBoxHeader').height();
+    var width = $(window).width();
+    $("#videoPlayerBox").css("height", GetHeight() + 35);
+    $("#videoPlayerBox").css("width", GetWidth());
+    $("#mainContent").css("width", width);
+    $("#mainContent").css("height", height);
+    $("#songBoxes").css("height", height - $("#adsense").height() - 15);
+    AdjustVideoSize();  
+  }
+
+  $(document).ready(function() {
+    AdjustSize();
+    $(window).bind('resize', AdjustSize);
+  });
+
   </script>
 </head>
 
@@ -119,9 +167,9 @@
         </div>
       </div>
       <div id="rightContent">
+        <div id="adsense">
+        </div>
         <div id="songBoxes" style="height: 936px; ">
-          <div class="songBox">Some Song Link</div>
-          <div class="songBox">Some Other Song</div>
         </div>
       </div>
     </div>
