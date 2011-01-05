@@ -18,33 +18,45 @@
 
   var ytplayer = null;
 
-  function SetupYouTubePlayer() {
+  function SetupYouTubePlayer(url) {
     var params = { allowScriptAccess: "always" };
     var atts = { id: "ytplayerObj" };
-    swfobject.embedSWF("http://www.youtube.com/v/dn8rxxNtP7U?enablejsapi=1&playerapiid=ytplayer",
-      "playback", GetWidth(), GetHeight(), "8", null, null, params, atts);
+    swfobject.embedSWF(url + "&playerapiid=ytplayerObj&enablejsapi=1",
+        "playback", GetWidth(), GetHeight(),
+        "8", null, null, params, atts);
+  }
+
+  function AddSongbox(container, title, thumbnails) {
+    var clickWrapper = document.createElement('div');
+    clickWrapper.setAttribute('class', 'clickWrapper');
+    if (thumbnails.length) {
+      var thumbnail = document.createElement('div');
+      thumbnail.setAttribute('class', 'songThumb');
+      var image = document.createElement('img');
+      image.setAttribute('class', 'thumbnail');
+      image.setAttribute('src', thumbnails[0]);
+      thumbnail.appendChild(image);
+      clickWrapper.appendChild(thumbnail);
+    }
+    var songDetails = document.createElement('div');
+    songDetails.setAttribute('class', 'songDetails');
+    songDetails.appendChild(document.createTextNode(title));
+    clickWrapper.appendChild(songDetails);
+    var row = document.createElement('div');
+    row.setAttribute('class', 'songBox');
+    row.appendChild(clickWrapper);
+    container.appendChild(row);
+    var clearFix = document.createElement('div');
+    clearFix.setAttribute('class', 'clearfix');
+    clearFix.appendChild(document.createTextNode(' '));
+    container.appendChild(clearFix);
   }
 
   function UpdatePlaylist(results) {
     var songBoxes = document.getElementById('playlist');
     songBoxes.innerHTML = '';
     for (x in results) {
-      var row = document.createElement('div');
-      row.setAttribute('class', 'songBox');
-      if (results[x]['thumbnails'].length) {
-        var thumbnail = document.createElement('div');
-        thumbnail.setAttribute('class', 'songThumb');
-        var image = document.createElement('img');
-        image.setAttribute('class', 'thumbnail');
-        image.setAttribute('src', results[x]['thumbnails'][0]);
-        thumbnail.appendChild(image);
-        row.appendChild(thumbnail);
-      }
-      var songDetails = document.createElement('div');
-      songDetails.setAttribute('class', 'songDetails');
-      songDetails.appendChild(document.createTextNode(results[x]['title']));
-      row.appendChild(songDetails);
-      songBoxes.appendChild(row);
+      AddSongbox(songBoxes, results[x]['title'], results[x]['thumbnails']);
     }
   }
 
@@ -60,9 +72,9 @@
 
   function onYouTubePlayerReady(playerId) {
     ytplayer = document.getElementById('ytplayerObj');
+    ytplayer.playVideo();
     ytplayer.addEventListener("onStateChange", "onYouTubeStateChange");
     ytplayer.addEventListener("onError", "onYouTubeError");
-    PlayNextSong();
   }
 
   function onYouTubeStateChange(newState) {
@@ -91,21 +103,17 @@
     req.onreadystatechange = function() {
       if (req.readyState == 4 && req.status == 200) {
         var response = JSON.parse(req.responseText);
-        ytplayer.loadVideoByUrl(response.url);
+        if (ytplayer == null) {
+          SetupYouTubePlayer(response.url);
+        } else {
+          ytplayer.loadVideoByUrl(response.url);
+        }
+
         SetCurrentSongTitle(response.title);
 
         var nowPlaying = document.getElementById('nowPlaying');
         nowPlaying.innerHTML = '';
-        if (response.thumbnails.length) {
-          var thumbnail = document.createElement('div');
-          thumbnail.setAttribute('class', 'songThumb');
-          var image = document.createElement('img');
-          image.setAttribute('class', 'thumbnail');
-          image.setAttribute('src', response.thumbnails[0]);
-          thumbnail.appendChild(image);
-          nowPlaying.appendChild(thumbnail);
-        }
-        nowPlaying.appendChild(document.createTextNode(response.title));
+        AddSongbox(nowPlaying, response.title, response.thumbnails);
 
         // Update the playlist.
         DoGetPlaylist("{{playlist}}", UpdatePlaylist);
@@ -144,7 +152,7 @@
   $(document).ready(function() {
     AdjustSize();
     $(window).bind('resize', AdjustSize);
-    SetupYouTubePlayer();
+    PlayNextSong();
     DoGetPlaylist("{{playlist}}", UpdatePlaylist);
   });
 
