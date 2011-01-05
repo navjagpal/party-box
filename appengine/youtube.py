@@ -216,7 +216,8 @@ class RandomPopularSong(webapp.RequestHandler):
   
     entry = random.choice(feed.entry)  
     result = {'url': entry.GetSwfUrl(),
-              'title': entry.media.title.text}
+              'title': entry.media.title.text,
+              'thumbnails': [x.url for x in entry.media.thumbnail]}
     self.response.out.write(simplejson.dumps(result))
 
 
