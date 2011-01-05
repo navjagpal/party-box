@@ -63,7 +63,7 @@
   function SetSharingUrl() {
     var link = document.createElement('a');
     var url = window.location.protocol + '//' + window.location.host +
-      '/youtube?p={{playlist}}';
+      '/playlist?p={{playlist}}';
     link.setAttribute('href', url);
     link.setAttribute('target', '_blank');
     link.appendChild(document.createTextNode(url));

@@ -52,7 +52,7 @@ def GetYouTubeService():
   return yt_service
 
 
-class Main(webapp.RequestHandler):
+class PlaylistEditor(webapp.RequestHandler):
 
   def get(self):
     playlist_key = self.request.get('p', None)
@@ -222,11 +222,11 @@ class RandomPopularSong(webapp.RequestHandler):
 
 
 application = webapp.WSGIApplication(
-  [('/youtube', Main),
+  [('/playlist', PlaylistEditor),
    ('/youtube/search', Search),
    ('/youtube/add', Add),
    ('/youtube/playlist', Playlist),
-   ('/youtube/player', Player),
+   ('/player', Player),
    ('/youtube/player/next', NextSong),
    ('/youtube/player/randomsong', RandomPopularSong)], debug=True)
 
