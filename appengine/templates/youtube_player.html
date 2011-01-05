@@ -49,7 +49,7 @@
     var clearFix = document.createElement('div');
     clearFix.setAttribute('class', 'clearfix');
     clearFix.appendChild(document.createTextNode(' '));
-    container.appendChild(clearFix);
+    row.appendChild(clearFix);
   }
 
   function UpdatePlaylist(results) {
@@ -114,6 +114,7 @@
         var nowPlaying = document.getElementById('nowPlaying');
         nowPlaying.innerHTML = '';
         AddSongbox(nowPlaying, response.title, response.thumbnails);
+        nowPlaying.children[0].setAttribute('class', 'songBox nowPlaying');
 
         // Update the playlist.
         DoGetPlaylist("{{playlist}}", UpdatePlaylist);
@@ -190,7 +191,7 @@
         <div id="adsense">
         </div>
         <div id="songBoxes" style="height: 936px; ">
-          <div id="nowPlaying" class="songBox nowPlaying"></div>
+          <div id="nowPlaying"></div>
           <div id="playlist"></div>
         </div>
       </div>
