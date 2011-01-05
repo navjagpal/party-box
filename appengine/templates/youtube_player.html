@@ -61,13 +61,24 @@
   }
 
   function SetSharingUrl() {
-    var link = document.createElement('a');
     var url = window.location.protocol + '//' + window.location.host +
       '/playlist?p={{playlist}}';
+
+    var img = document.createElement('img');
+    img.setAttribute('src', 'http://qrcode.kaywa.com/img.php?s=8&d=' +
+        encodeURIComponent(url));
+    img.setAttribute('class', 'qrcodeImg');
+    var imgLink = document.createElement('a');
+    imgLink.setAttribute('href', url);
+    imgLink.setAttribute('target', '_blank');
+    imgLink.appendChild(img);
+    document.getElementById('sharing').appendChild(imgLink);
+
+    var link = document.createElement('a');
     link.setAttribute('href', url);
     link.setAttribute('target', '_blank');
     link.appendChild(document.createTextNode(url));
-    document.getElementById('sharing_url').appendChild(link);
+    document.getElementById('sharing').appendChild(link);
   }
 
   function onYouTubePlayerReady(playerId) {
@@ -155,6 +166,7 @@
     $(window).bind('resize', AdjustSize);
     PlayNextSong();
     DoGetPlaylist("{{playlist}}", UpdatePlaylist);
+    SetSharingUrl();
   });
 
   </script>
@@ -164,9 +176,6 @@
   <div id="grBox">
 
     <div id="grBoxHeader">
-      <div id="sharing_url">
-      </div>
-      <script type="text/javascript">SetSharingUrl();</script>
       <div id="grBoxHeaderRight">
         Some Right Content
       </div>
@@ -188,6 +197,9 @@
         </div>
       </div>
       <div id="rightContent">
+        <div>
+          <div id="sharing"></div>
+        </div>
         <div id="adsense">
         </div>
         <div id="songBoxes" style="height: 936px; ">

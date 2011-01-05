@@ -523,3 +523,7 @@ ul.topMenuItems {
 a.underline {
   text-decoration: underline;
 }
+.qrcodeImg {
+  width: 100%;
+  height: auto;
+}
