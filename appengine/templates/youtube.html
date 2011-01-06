@@ -3,6 +3,9 @@
   <title></title>
 
   <script type="text/javascript"
+    src="/static/jquery-1.4.2.min.js"></script>
+
+  <script type="text/javascript"
     src="/static/partybox.js"></script>
 
   <script type="text/javascript"
@@ -129,6 +132,51 @@
                        results[x]['count'])
     }
   }
+
+  function ytsearch(query) {
+    var ytUrl = 'http://gdata.youtube.com/feeds/api/videos?q=' +
+      encodeURIComponent(query) + '&format=5&v=2&alt=jsonc&category=Music&max_results=10';
+    $.ajax({
+      type: "GET",
+      url: ytUrl,
+      dataType: "jsonp",
+      success: function (responseData, textStatus, XMLHttpRequest) {
+        if (responseData.data.items) {
+          displayVids(responseData.data.items);
+          } else {
+        alert('no items');
+          // TODO: no video results
+        }
+      }
+    });
+  }
+
+  function displayVids(vids) {
+    $("#vid-results").empty();
+    var vlength = Math.min(vids.length, 10);
+    for (var vIdx=0; vIdx<vlength; vIdx++) {
+      //var vidItem = $("<div onclick='loadVideo(\""+vids[vIdx].id+"\")' class='vid-item'>");
+      var title = vids[vIdx].title;
+      var vidItem = $("<div onclick='queueSong(\""+vids[vIdx].id+"\", \""+title+"\", \""+vids[vIdx].thumbnail.sqDefault+"\");$(\"#vid-results\").hide();' class='vid-item'>");
+      vidItem.append($("<img class='vid-img'>").attr("src", vids[vIdx].thumbnail.sqDefault));
+      vidItem.append($("<span class='vid-title'>"+vids[vIdx].title+"</span>"));
+      $("#vid-results").append(vidItem);
+    }
+  }
+
+  function queueSong(id, title, thumbnail) {
+    var thumbnails = [];
+    thumbnails.push(thumbnail);
+    AddToPlaylist("http://www.youtube.com/v/" + id + "?enablejsapi=1&playerapiid=ytplayer",
+        title, thumbnails);
+  }
+
+  window.onload = function() {
+    document.getElementById('search').focus();
+    document.getElementById('search').onfocus = function() {
+      $("#vid-results").show();
+    }
+  }
   </script>
 </head>
 
@@ -138,16 +186,14 @@
 <div id="playlist"></div>
 
 <h3>Search</h3>
-<div id="ytapiplayer">
-  You need Flash Player 8+ and JavaScript enabled to view this video.
-</div>
 
-<button type="button" onClick="javascript:AddToPlaylist()">Add To Playlist</button>
+<button type="button" onClick="javascript:AddToPlaylist()" style="display: none">Add To Playlist</button>
 
 <div>
-  <input type="text" id="search" size="100" onkeydown="if (event.keyCode == 13) DoSearch()"/>
-  <button type="button" onClick="javascript:DoSearch()">Search</button>
+  <input type="text" id="search" size="50" onkeyup="ytsearch(this.value)"/>
 </div>
+
+<div id="vid-results"></div>
 
 <div id="results"></div>
 
