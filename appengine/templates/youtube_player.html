@@ -22,7 +22,7 @@
   var ytplayer = null;
 
   function setupYouTubePlayer(url) {
-    var params = { allowScriptAccess: "always" };
+    var params = { allowScriptAccess: "always", wmode: "transparent" };
     var atts = { id: "ytplayerObj" };
     swfobject.embedSWF(url + "&playerapiid=ytplayerObj&enablejsapi=1",
         "playback", getWidth(), getHeight(),

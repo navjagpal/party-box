@@ -17,6 +17,8 @@
 #vid-results {
   width: 273px;
   background: -webkit-gradient(linear, left top, left bottom, from(#555), to(#333));
+  position: absolute;
+  z-index: 2;
 }
 
 .vid-item {
