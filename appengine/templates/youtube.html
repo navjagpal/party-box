@@ -1,6 +1,12 @@
 <html>
 <head>
-  <title></title>
+  <title>PartyBox</title>
+
+  <link rel="stylesheet" type="text/css"
+    href="/static/style.css" title="default"/>
+
+  <link rel="stylesheet" type="text/css"
+    href="/static/video.css"/>
 
   <script type="text/javascript"
     src="/static/jquery-1.4.2.min.js"></script>
@@ -96,7 +102,7 @@
   }
 
   function DoSearch() {
-    var search_input = document.getElementById('search');
+    var search_input = document.getElementById('search-box');
     if (!search_input)
       return;
     var query = 'q=' + encodeURIComponent(search_input.value);
@@ -172,8 +178,8 @@
   }
 
   window.onload = function() {
-    document.getElementById('search').focus();
-    document.getElementById('search').onfocus = function() {
+    document.getElementById('search-box').focus();
+    document.getElementById('search-box').onfocus = function() {
       $("#vid-results").show();
     }
   }
@@ -190,7 +196,7 @@
 <button type="button" onClick="javascript:AddToPlaylist()" style="display: none">Add To Playlist</button>
 
 <div>
-  <input type="text" id="search" size="50" onkeyup="ytsearch(this.value)"/>
+  <input type="text" id="search-box" size="50" onkeyup="ytsearch(this.value)"/>
 </div>
 
 <div id="vid-results"></div>
