@@ -54,7 +54,7 @@
   function queueSong(id, title, thumbnail) {
     var thumbnails = [];
     thumbnails.push(thumbnail);
-    AddToPlaylist("{{playlist}}", "http://www.youtube.com/v/" + id + "?enablejsapi=1&playerapiid=ytplayer",
+    addToPlaylist("{{playlist}}", "http://www.youtube.com/v/" + id + "?enablejsapi=1&playerapiid=ytplayer",
         unescape(title), thumbnails);
   }
 
