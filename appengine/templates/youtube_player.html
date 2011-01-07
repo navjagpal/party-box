@@ -30,7 +30,7 @@
     var songBoxes = document.getElementById('playlist');
     songBoxes.innerHTML = '';
     for (x in results) {
-      AddSongbox(songBoxes, results[x]['title'], results[x]['thumbnails']);
+      AddSongbox(songBoxes, results[x]['url'], results[x]['title'], results[x]['thumbnails']);
     }
   }
 
@@ -98,7 +98,7 @@
 
         var nowPlaying = document.getElementById('nowPlaying');
         nowPlaying.innerHTML = '';
-        AddSongbox(nowPlaying, response.title, response.thumbnails);
+        AddSongbox(nowPlaying, response.url, response.title, response.thumbnails);
         nowPlaying.children[0].setAttribute('class', 'songBox nowPlaying');
 
         // Update the playlist.

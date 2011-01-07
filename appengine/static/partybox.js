@@ -11,7 +11,7 @@ function DoGetPlaylist(playlist, callback) {
   req.send(null);
 }
 
-function AddSongbox(container, title, thumbnails) {
+function AddSongbox(container, url, title, thumbnails, thumbsUpCallback) {
   var clickWrapper = document.createElement('div');
   clickWrapper.setAttribute('class', 'clickWrapper');
   if (thumbnails.length) {
@@ -30,6 +30,19 @@ function AddSongbox(container, title, thumbnails) {
   var row = document.createElement('div');
   row.setAttribute('class', 'songBox');
   row.appendChild(clickWrapper);
+
+  if (thumbsUpCallback != undefined) {
+    var thumbsUp = document.createElement('div');
+    thumbsUp.setAttribute('class', 'thumbs thumbUpSong');
+    var thumbsUpImg = document.createElement('img');
+    thumbsUpImg.setAttribute('src', '/static/images/thumbs-up.png');
+    thumbsUpImg.onclick = function() {
+      thumbsUpCallback(url, title, thumbnails); 
+    }
+    thumbsUp.appendChild(thumbsUpImg);
+    row.appendChild(thumbsUp);
+  }
+
   container.appendChild(row);
   var clearFix = document.createElement('div');
   clearFix.setAttribute('class', 'clearfix');

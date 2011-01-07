@@ -416,6 +416,7 @@ ul.topMenuItems {
   float: right;
   width: 8%;
   padding-bottom: 6px;
+  cursor: pointer;
 }
 .thumbs.inactive {
   cursor: default;
