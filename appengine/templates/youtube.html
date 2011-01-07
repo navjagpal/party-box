@@ -150,7 +150,6 @@
         if (responseData.data.items) {
           displayVids(responseData.data.items);
           } else {
-        alert('no items');
           // TODO: no video results
         }
       }
@@ -183,26 +182,40 @@
       $("#vid-results").show();
     }
   }
+
+  window.onclick = function() {
+   var ev = arguments[0] || window.event,
+    origEl = ev.target || ev.srcElement;
+    if (origEl.id != "search-box") {
+      $("#vid-results").hide();
+    }
+  }
   </script>
 </head>
 
 <body>
 
-<h3>Playlist</h3>
-<div id="playlist"></div>
+  <div id="grBox">
+    <div id="grBoxHeader">
+      <div id="grBoxHeaderRight"></div>
+    </div>
 
-<h3>Search</h3>
+    <div id="mainContent">
+      <div id="leftContent">
+	<div id="header">
+	  <span id="search-wrapper">
+	    <input type="text" id="search-box" 
+	      onkeyup="ytsearch(this.value)"/>
+	  </span>
+	</div>
+	<div id="vid-results"></div>
+      </div>
+      <div id="rightContent">
+	<div id="playlist"></div>
+      </div>
+    </div>
 
-<button type="button" onClick="javascript:AddToPlaylist()" style="display: none">Add To Playlist</button>
-
-<div>
-  <input type="text" id="search-box" size="50" onkeyup="ytsearch(this.value)"/>
-</div>
-
-<div id="vid-results"></div>
-
-<div id="results"></div>
-
+ </div>
 </body>
 
 </html>
