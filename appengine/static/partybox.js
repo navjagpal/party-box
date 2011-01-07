@@ -11,21 +11,21 @@ function DoGetPlaylist(playlist, callback) {
   req.send(null);
 }
 
-function AddSongbox(container, url, title, thumbnails, thumbsUpCallback) {
+function AddSongbox(container, entry, thumbsUpCallback) {
   var clickWrapper = document.createElement('div');
   clickWrapper.setAttribute('class', 'clickWrapper');
-  if (thumbnails.length) {
+  if (entry.thumbnails.length) {
     var thumbnail = document.createElement('div');
     thumbnail.setAttribute('class', 'songThumb');
     var image = document.createElement('img');
     image.setAttribute('class', 'thumbnail');
-    image.setAttribute('src', thumbnails[0]);
+    image.setAttribute('src', entry.thumbnails[0]);
     thumbnail.appendChild(image);
     clickWrapper.appendChild(thumbnail);
   }
   var songDetails = document.createElement('div');
   songDetails.setAttribute('class', 'songDetails');
-  songDetails.appendChild(document.createTextNode(title));
+  songDetails.appendChild(document.createTextNode(entry.title));
   clickWrapper.appendChild(songDetails);
   var row = document.createElement('div');
   row.setAttribute('class', 'songBox');
@@ -37,7 +37,7 @@ function AddSongbox(container, url, title, thumbnails, thumbsUpCallback) {
     var thumbsUpImg = document.createElement('img');
     thumbsUpImg.setAttribute('src', '/static/images/thumbs-up.png');
     thumbsUpImg.onclick = function() {
-      thumbsUpCallback(url, title, thumbnails); 
+      thumbsUpCallback(entry.url, entry.title, entry.thumbnails); 
     }
     thumbsUp.appendChild(thumbsUpImg);
     row.appendChild(thumbsUp);

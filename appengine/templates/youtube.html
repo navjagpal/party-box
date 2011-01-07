@@ -133,9 +133,7 @@
     for (x in results) {
       //AppendToPlaylist(results[x]['url'], results[x]['title'],
       //                 results[x]['count'])
-      AddSongbox(songBoxes, results[x]['url'],
-		 results[x]['title'], results[x]['thumbnails'],
-		 AddToPlaylist)
+      AddSongbox(songBoxes, results[x], AddToPlaylist)
     }
   }
 
