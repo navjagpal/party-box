@@ -5,13 +5,13 @@ function DoGetPlaylist(playlist, callback) {
   req.onreadystatechange = function() {
     if (req.readyState == 4 && req.status == 200) {
       var response = JSON.parse(req.responseText);
-      callback(response);
+      callback(playlist, response);
     }
   }
   req.send(null);
 }
 
-function AddSongbox(container, entry, thumbsUpCallback) {
+function AddSongbox(playlist, container, entry, thumbsUpCallback) {
   var clickWrapper = document.createElement('div');
   clickWrapper.setAttribute('class', 'clickWrapper');
   if (entry.thumbnails.length) {
@@ -37,9 +37,11 @@ function AddSongbox(container, entry, thumbsUpCallback) {
     var thumbsUpImg = document.createElement('img');
     thumbsUpImg.setAttribute('src', '/static/images/thumbs-up.png');
     thumbsUpImg.onclick = function() {
-      thumbsUpCallback(entry.url, entry.title, entry.thumbnails); 
+      thumbsUpCallback(playlist, entry.url, entry.title, entry.thumbnails); 
     }
     thumbsUp.appendChild(thumbsUpImg);
+    thumbsUp.appendChild(document.createTextNode(
+      entry.count));
     row.appendChild(thumbsUp);
   }
 
@@ -50,3 +52,32 @@ function AddSongbox(container, entry, thumbsUpCallback) {
   row.appendChild(clearFix);
 }
 
+function AddToPlaylist(playlist, url, title, thumbnails) {
+  var query = 'p=' + encodeURIComponent(playlist) +
+    '&url=' + encodeURIComponent(url) +
+    '&title=' + encodeURIComponent(title);
+  if (thumbnails.length)
+    query = query + '&thumbnail=' + encodeURIComponent(thumbnails[0]);
+  var req = new XMLHttpRequest();
+  req.open('GET', '/youtube/add?' + query, true);
+  req.onreadystatechange = function() {
+    if (req.readyState == 4 && req.status == 200) {
+      var response = JSON.parse(req.responseText);
+      if (response.message) {
+	alert(response.message);
+      }
+      // TODO(nav): Update the list differently, maybe using
+      // a timer or the channel API.
+      DoGetPlaylist(playlist, UpdatePlaylist);
+    }
+  }
+  req.send(null);
+}
+
+function UpdatePlaylist(playlist, results) {
+  var songBoxes = document.getElementById('playlist');
+  songBoxes.innerHTML = '';
+  for (x in results) {
+    AddSongbox(playlist, songBoxes, results[x], AddToPlaylist);
+  }
+}

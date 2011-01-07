@@ -1,6 +1,6 @@
 <html>
 <head>
-  <title>PartyBox</title>
+  <title>PartyBox::Playlist</title>
 
   <link rel="stylesheet" type="text/css"
     href="/static/style.css" title="default"/>
@@ -52,36 +52,6 @@
     current_thumbnails = thumbnails;
   }
 
-  function AddToPlaylist(url, title, thumbnails) {
-    if (url == undefined)
-      url = current_url;
-    if (title == undefined)
-      title = current_title;
-    if (thumbnails == undefined)
-      thumbnails = current_thumbnails;
-    if (url == null)
-      return;
-    var query = 'p=' + encodeURIComponent("{{playlist}}") +
-      '&url=' + encodeURIComponent(url) +
-      '&title=' + encodeURIComponent(title);
-    if (thumbnails.length)
-      query = query + '&thumbnail=' + encodeURIComponent(thumbnails[0]);
-    var req = new XMLHttpRequest();
-    req.open('GET', '/youtube/add?' + query, true);
-    req.onreadystatechange = function() {
-      if (req.readyState == 4 && req.status == 200) {
-        var response = JSON.parse(req.responseText);
-        if (response.message) {
-          alert(response.message);
-        }
-        // TODO(nav): Update the list differently, maybe using
-        // a timer or the channel API.
-        DoGetPlaylist("{{playlist}}", UpdatePlaylist);
-      }
-    }
-    req.send(null);
-  }
-
   function AppendToResultsList(title, url, thumbnails) {
     var row = document.createElement('div');
     row.appendChild(document.createElement('div')
@@ -117,26 +87,6 @@
     req.send(null);
   }
 
-  function AppendToPlaylist(url, title, count) {
-    var row = document.createElement('div');
-    row.appendChild(document.createElement('div')
-      .appendChild(document.createTextNode(title + "," + count)));
-    row.onclick = function() {
-      AddToPlaylist(url, title);
-    }
-    document.getElementById('playlist').appendChild(row);
-  }
-
-  function UpdatePlaylist(results) {
-    var songBoxes = document.getElementById('playlist');
-    songBoxes.innerHTML = '';
-    for (x in results) {
-      //AppendToPlaylist(results[x]['url'], results[x]['title'],
-      //                 results[x]['count'])
-      AddSongbox(songBoxes, results[x], AddToPlaylist)
-    }
-  }
-
   function ytsearch(query) {
     var ytUrl = 'http://gdata.youtube.com/feeds/api/videos?q=' +
       encodeURIComponent(query) + '&format=5&v=2&alt=jsonc&category=Music&max_results=10';
@@ -170,7 +120,7 @@
   function queueSong(id, title, thumbnail) {
     var thumbnails = [];
     thumbnails.push(thumbnail);
-    AddToPlaylist("http://www.youtube.com/v/" + id + "?enablejsapi=1&playerapiid=ytplayer",
+    AddToPlaylist("{{playlist}}", "http://www.youtube.com/v/" + id + "?enablejsapi=1&playerapiid=ytplayer",
         title, thumbnails);
   }
 

@@ -1,6 +1,6 @@
 <html>
 <head>
-  <title></title>
+  <title>PartyBox::Player</title>
 
   <link rel="stylesheet" type="text/css"
     href="/static/style.css" title="default"/>
@@ -24,14 +24,6 @@
     swfobject.embedSWF(url + "&playerapiid=ytplayerObj&enablejsapi=1",
         "playback", GetWidth(), GetHeight(),
         "8", null, null, params, atts);
-  }
-
-  function UpdatePlaylist(results) {
-    var songBoxes = document.getElementById('playlist');
-    songBoxes.innerHTML = '';
-    for (x in results) {
-      AddSongbox(songBoxes, results[x]);
-    }
   }
 
   function SetSharingUrl() {
@@ -98,7 +90,7 @@
 
         var nowPlaying = document.getElementById('nowPlaying');
         nowPlaying.innerHTML = '';
-        AddSongbox(nowPlaying, response);
+        AddSongbox("{{playlist}}", nowPlaying, response);
         nowPlaying.children[0].setAttribute('class', 'songBox nowPlaying');
 
         // Update the playlist.
