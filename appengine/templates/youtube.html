@@ -117,10 +117,6 @@
     req.send(null);
   }
 
-  function ClearPlaylist() {
-    document.getElementById('playlist').innerHTML = '';
-  }
-
   function AppendToPlaylist(url, title, count) {
     var row = document.createElement('div');
     row.appendChild(document.createElement('div')
@@ -132,10 +128,12 @@
   }
 
   function UpdatePlaylist(results) {
-    ClearPlaylist();
+    var songBoxes = document.getElementById('playlist');
+    songBoxes.innerHTML = '';
     for (x in results) {
-      AppendToPlaylist(results[x]['url'], results[x]['title'],
-                       results[x]['count'])
+      //AppendToPlaylist(results[x]['url'], results[x]['title'],
+      //                 results[x]['count'])
+      AddSongbox(songBoxes, results[x]['title'], results[x]['thumbnails']);
     }
   }
 
@@ -211,7 +209,9 @@
 	<div id="vid-results"></div>
       </div>
       <div id="rightContent">
-	<div id="playlist"></div>
+	<div id="songBoxes">
+	  <div id="playlist"></div>
+	</div>
       </div>
     </div>
 

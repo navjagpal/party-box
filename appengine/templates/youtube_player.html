@@ -26,32 +26,6 @@
         "8", null, null, params, atts);
   }
 
-  function AddSongbox(container, title, thumbnails) {
-    var clickWrapper = document.createElement('div');
-    clickWrapper.setAttribute('class', 'clickWrapper');
-    if (thumbnails.length) {
-      var thumbnail = document.createElement('div');
-      thumbnail.setAttribute('class', 'songThumb');
-      var image = document.createElement('img');
-      image.setAttribute('class', 'thumbnail');
-      image.setAttribute('src', thumbnails[0]);
-      thumbnail.appendChild(image);
-      clickWrapper.appendChild(thumbnail);
-    }
-    var songDetails = document.createElement('div');
-    songDetails.setAttribute('class', 'songDetails');
-    songDetails.appendChild(document.createTextNode(title));
-    clickWrapper.appendChild(songDetails);
-    var row = document.createElement('div');
-    row.setAttribute('class', 'songBox');
-    row.appendChild(clickWrapper);
-    container.appendChild(row);
-    var clearFix = document.createElement('div');
-    clearFix.setAttribute('class', 'clearfix');
-    clearFix.appendChild(document.createTextNode(' '));
-    row.appendChild(clearFix);
-  }
-
   function UpdatePlaylist(results) {
     var songBoxes = document.getElementById('playlist');
     songBoxes.innerHTML = '';
@@ -181,9 +155,9 @@
       </div>
     </div>
 
-    <div id="mainContent" style="width: 1920px; height: 1011px; ">
+    <div id="mainContent">
       <div id="leftContent">
-        <div id="videoPlayerBox" style="height: 994px; width: 1454px; ">
+        <div id="videoPlayerBox">
           <div id="videoPlayerHeader">
             <div id="currSongTitle">
             </div>
@@ -202,7 +176,7 @@
         </div>
         <div id="adsense">
         </div>
-        <div id="songBoxes" style="height: 936px; ">
+        <div id="songBoxes">
           <div id="nowPlaying"></div>
           <div id="playlist"></div>
         </div>
