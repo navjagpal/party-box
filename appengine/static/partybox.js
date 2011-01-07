@@ -35,9 +35,14 @@ function AddSongbox(playlist, container, entry, thumbsUpCallback) {
     var thumbsUp = document.createElement('div');
     thumbsUp.setAttribute('class', 'thumbs thumbUpSong');
     var thumbsUpImg = document.createElement('img');
-    thumbsUpImg.setAttribute('src', '/static/images/thumbs-up.png');
-    thumbsUpImg.onclick = function() {
-      thumbsUpCallback(playlist, entry.url, entry.title, entry.thumbnails); 
+    if (entry.voted) {
+      thumbsUpImg.setAttribute('src', '/static/images/voted.png');
+    } else {
+      thumbsUpImg.setAttribute('src', '/static/images/thumbs-up.png');
+      thumbsUpImg.setAttribute('class', 'voteImg');
+      thumbsUpImg.onclick = function() {
+	thumbsUpCallback(playlist, entry.url, entry.title, entry.thumbnails); 
+      }
     }
     thumbsUp.appendChild(thumbsUpImg);
     thumbsUp.appendChild(document.createTextNode(

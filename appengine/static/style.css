@@ -416,6 +416,8 @@ ul.topMenuItems {
   float: right;
   width: 8%;
   padding-bottom: 6px;
+}
+.voteImg {
   cursor: pointer;
 }
 .thumbs.inactive {

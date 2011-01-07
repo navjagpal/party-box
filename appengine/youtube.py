@@ -145,6 +145,15 @@ class Add(webapp.RequestHandler):
 def GetSortedPlaylist(playlist):
   if isinstance(playlist, (str, unicode)):
     playlist = model.Playlist.get(playlist)
+
+  # Build a dict of votes this user has casted.
+  voted = {}
+  user = users.get_current_user()
+  query = model.YouTubeVote.all().filter('playlist = ', playlist)
+  query.filter('user = ', user)
+  for vote in query:
+    voted[vote.url] = True
+
   configs = model.GeneralCounterShardConfig.all().filter(
     'playlist =', playlist)
   results = []
@@ -154,7 +163,8 @@ def GetSortedPlaylist(playlist):
     video = model.YouTubeVideo.get_by_key_name(url)
     results.append({'url': url, 'title': video.title,
                     'thumbnails': video.thumbnails,
-                    'count': model.get_count(config.name)})
+                    'count': model.get_count(config.name),
+		    'voted': url in voted})
   results.sort(lambda x, y: cmp(y['count'], x['count']))
   return results
 
