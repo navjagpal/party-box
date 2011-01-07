@@ -118,3 +118,43 @@ function getQRCode(url) {
   return 'http://qrcode.kaywa.com/img.php?s=8&d=' +
     encodeURIComponent(url);
 }
+
+function ytsearch(playlist, query) {
+  var ytUrl = 'http://gdata.youtube.com/feeds/api/videos?q=' +
+    encodeURIComponent(query) + '&format=5&v=2&alt=jsonc&category=Music&max_results=10' +
+    '&orderBy=relevance';
+  $.ajax({
+    type: "GET",
+    url: ytUrl,
+    dataType: "jsonp",
+    success: function (responseData, textStatus, XMLHttpRequest) {
+      if (responseData.data.items) {
+	displayVids(playlist, responseData.data.items);
+	} else {
+	// TODO: no video results
+      }
+    }
+  });
+}
+
+function displayVids(playlist, vids) {
+  $("#vid-results").empty();
+  var vlength = Math.min(vids.length, 10);
+  for (var vIdx=0; vIdx<vlength; vIdx++) {
+    //var vidItem = $("<div onclick='loadVideo(\""+vids[vIdx].id+"\")' class='vid-item'>");
+    var title = vids[vIdx].title;
+    title = escape(title);
+    var vidItem = $("<div onclick='queueSong(\""+playlist+"\", \""+vids[vIdx].id+"\", \""+title+"\", \""+vids[vIdx].thumbnail.sqDefault+"\");$(\"#vid-results\").hide();' class='vid-item'>");
+    vidItem.append($("<img class='vid-img'>").attr("src", vids[vIdx].thumbnail.sqDefault));
+    vidItem.append($("<span class='vid-title'>"+vids[vIdx].title+"</span>"));
+    $("#vid-results").append(vidItem);
+  }
+}
+
+function queueSong(playlist, id, title, thumbnail) {
+  var thumbnails = [];
+  thumbnails.push(thumbnail);
+  addToPlaylist(playlist, "http://www.youtube.com/v/" + id + "?enablejsapi=1&playerapiid=ytplayer",
+      unescape(title), thumbnails);
+}
+

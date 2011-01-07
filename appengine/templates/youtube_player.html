@@ -5,6 +5,9 @@
   <link rel="stylesheet" type="text/css"
     href="/static/style.css" title="default"/>
 
+  <link rel="stylesheet" type="text/css"
+    href="/static/video.css"/>
+
   <script type="text/javascript"
     src="/static/jquery-1.4.2.min.js"></script>
 
@@ -103,10 +106,24 @@
     adjustSize();
     $(window).bind('resize', adjustSize);
     playNextSong();
-    doGetPlaylist("{{playlist}}", updatePlaylist);
     setSharingUrl();
   });
 
+  window.onload = function() {
+    doGetPlaylist("{{playlist}}", updatePlaylist);
+    document.getElementById('search-box').focus();
+    document.getElementById('search-box').onfocus = function() {
+      $("#vid-results").show();
+    }
+  }
+
+  window.onclick = function() {
+   var ev = arguments[0] || window.event,
+    origEl = ev.target || ev.srcElement;
+    if (origEl.id != "search-box") {
+      $("#vid-results").hide();
+    }
+  }
   </script>
 </head>
 
@@ -121,6 +138,13 @@
       <div id="leftContent">
         <div id="videoPlayerBox">
           <div id="videoPlayerHeader">
+	    <div id="header">
+	      <span id="search-wrapper">
+		<input type="text" id="search-box" 
+		  onkeyup="ytsearch('{{playlist}}', this.value)"/>
+	      </span>
+	    </div>
+	    <div id="vid-results"></div>
             <div id="currSongTitle">
             </div>
             <div id="qualitySelector">
