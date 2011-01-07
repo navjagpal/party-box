@@ -59,7 +59,7 @@
   }
 
   window.onload = function() {
-    DoGetPlaylist("{{playlist}}", UpdatePlaylist);
+    doGetPlaylist("{{playlist}}", updatePlaylist);
     document.getElementById('search-box').focus();
     document.getElementById('search-box').onfocus = function() {
       $("#vid-results").show();
@@ -73,6 +73,11 @@
       $("#vid-results").hide();
     }
   }
+
+  $(document).ready(function() {
+    adjustSize();
+    $(window).bind('resize', adjustSize);
+  });
   </script>
 </head>
 

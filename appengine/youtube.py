@@ -66,7 +66,7 @@ class PlaylistEditor(webapp.RequestHandler):
       return self.error(404)  # TODO(nav): Better error.
 
     path = os.path.join(os.path.dirname(__file__),
-      'templates/youtube.html')
+      'templates/youtube_playlist.html')
     self.response.out.write(
       template.render(path, {'playlist': playlist_key}))
 

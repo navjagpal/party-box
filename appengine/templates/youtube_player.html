@@ -18,21 +18,20 @@
 
   var ytplayer = null;
 
-  function SetupYouTubePlayer(url) {
+  function setupYouTubePlayer(url) {
     var params = { allowScriptAccess: "always" };
     var atts = { id: "ytplayerObj" };
     swfobject.embedSWF(url + "&playerapiid=ytplayerObj&enablejsapi=1",
-        "playback", GetWidth(), GetHeight(),
+        "playback", getWidth(), getHeight(),
         "8", null, null, params, atts);
   }
 
-  function SetSharingUrl() {
+  function setSharingUrl() {
     var url = window.location.protocol + '//' + window.location.host +
       '/playlist?p={{playlist}}';
 
     var img = document.createElement('img');
-    img.setAttribute('src', 'http://qrcode.kaywa.com/img.php?s=8&d=' +
-        encodeURIComponent(url));
+    img.setAttribute('src', getQRCode(url));
     img.setAttribute('class', 'qrcodeImg');
     var imgLink = document.createElement('a');
     imgLink.setAttribute('href', url);
@@ -56,17 +55,17 @@
 
   function onYouTubeStateChange(newState) {
     if (newState == 0) {
-      PlayNextSong();
+      playNextSong();
     }
   }
 
   function onYouTubeError(code) {
     // TODO(nav): Log an informative message to the console that there
     // was an error, and that we're skipping the track.
-    PlayNextSong();
+    playNextSong();
   }
 
-  function SetCurrentSongTitle(title) {
+  function setCurrentSongTitle(title) {
     var e = document.getElementById('currSongTitle');
     if (!e)
       return;
@@ -74,65 +73,38 @@
     e.appendChild(document.createTextNode(title));
   }
 
-  function PlayNextSong() {
+  function playNextSong() {
     var req = new XMLHttpRequest();
     req.open('GET', '/youtube/player/next', true);
     req.onreadystatechange = function() {
       if (req.readyState == 4 && req.status == 200) {
         var response = JSON.parse(req.responseText);
         if (ytplayer == null) {
-          SetupYouTubePlayer(response.url);
+          setupYouTubePlayer(response.url);
         } else {
           ytplayer.loadVideoByUrl(response.url);
         }
 
-        SetCurrentSongTitle(response.title);
+        setCurrentSongTitle(response.title);
 
         var nowPlaying = document.getElementById('nowPlaying');
         nowPlaying.innerHTML = '';
-        AddSongbox("{{playlist}}", nowPlaying, response);
+        addSongbox("{{playlist}}", nowPlaying, response);
         nowPlaying.children[0].setAttribute('class', 'songBox nowPlaying');
 
         // Update the playlist.
-        DoGetPlaylist("{{playlist}}", UpdatePlaylist);
+        doGetPlaylist("{{playlist}}", updatePlaylist);
       }
     }
     req.send(null);
   }
 
-  function GetHeight() {
-    // -25px for the margins / paddings
-    return $(window).height() - $("#grBoxHeader").height() - 
-           $("#videoPlayerHeader").height() - 20;
-  }
-
-  function GetWidth() {
-    // -something for the margins / paddings
-    return $(window).width() - $("#rightContent").width() - 25;
-  } 
-  
-  function AdjustVideoSize() {
-    $("#ytplayerObj").attr("height", GetHeight()); 
-    $("#ytplayerObj").attr("width", GetWidth()); 
-  }
-
-  function AdjustSize() {
-    var height = $(window).height() - $('#grBoxHeader').height();
-    var width = $(window).width();
-    $("#videoPlayerBox").css("height", GetHeight() + 35);
-    $("#videoPlayerBox").css("width", GetWidth());
-    $("#mainContent").css("width", width);
-    $("#mainContent").css("height", height);
-    $("#songBoxes").css("height", height - $("#adsense").height() - 15);
-    AdjustVideoSize();  
-  }
-
   $(document).ready(function() {
-    AdjustSize();
-    $(window).bind('resize', AdjustSize);
-    PlayNextSong();
-    DoGetPlaylist("{{playlist}}", UpdatePlaylist);
-    SetSharingUrl();
+    adjustSize();
+    $(window).bind('resize', adjustSize);
+    playNextSong();
+    doGetPlaylist("{{playlist}}", updatePlaylist);
+    setSharingUrl();
   });
 
   </script>
@@ -142,9 +114,7 @@
   <div id="grBox">
 
     <div id="grBoxHeader">
-      <div id="grBoxHeaderRight">
-        Some Right Content
-      </div>
+      <div id="grBoxHeaderRight"></div>
     </div>
 
     <div id="mainContent">
@@ -154,7 +124,7 @@
             <div id="currSongTitle">
             </div>
             <div id="qualitySelector">
-              <button type="button" onclick="javascript:PlayNextSong()">Next</button>
+              <button type="button" onclick="javascript:playNextSong()">Next</button>
             </div>
           </div>
           <div id="playback">
@@ -166,8 +136,7 @@
         <div>
           <div id="sharing"></div>
         </div>
-        <div id="adsense">
-        </div>
+        <div id="adsense"></div>
         <div id="songBoxes">
           <div id="nowPlaying"></div>
           <div id="playlist"></div>

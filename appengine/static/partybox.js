@@ -1,4 +1,4 @@
-function DoGetPlaylist(playlist, callback) {
+function doGetPlaylist(playlist, callback) {
   var req = new XMLHttpRequest();
   var query = 'p=' + encodeURIComponent(playlist);
   req.open('GET', '/youtube/playlist?' + query, true);
@@ -11,7 +11,7 @@ function DoGetPlaylist(playlist, callback) {
   req.send(null);
 }
 
-function AddSongbox(playlist, container, entry, thumbsUpCallback) {
+function addSongbox(playlist, container, entry, thumbsUpCallback) {
   var clickWrapper = document.createElement('div');
   clickWrapper.setAttribute('class', 'clickWrapper');
   if (entry.thumbnails.length) {
@@ -57,7 +57,7 @@ function AddSongbox(playlist, container, entry, thumbsUpCallback) {
   row.appendChild(clearFix);
 }
 
-function AddToPlaylist(playlist, url, title, thumbnails) {
+function addToPlaylist(playlist, url, title, thumbnails) {
   var query = 'p=' + encodeURIComponent(playlist) +
     '&url=' + encodeURIComponent(url) +
     '&title=' + encodeURIComponent(title);
@@ -73,16 +73,48 @@ function AddToPlaylist(playlist, url, title, thumbnails) {
       }
       // TODO(nav): Update the list differently, maybe using
       // a timer or the channel API.
-      DoGetPlaylist(playlist, UpdatePlaylist);
+      doGetPlaylist(playlist, updatePlaylist);
     }
   }
   req.send(null);
 }
 
-function UpdatePlaylist(playlist, results) {
+function updatePlaylist(playlist, results) {
   var songBoxes = document.getElementById('playlist');
   songBoxes.innerHTML = '';
   for (x in results) {
-    AddSongbox(playlist, songBoxes, results[x], AddToPlaylist);
+    addSongbox(playlist, songBoxes, results[x], addToPlaylist);
   }
+}
+
+function getHeight() {
+  // -25px for the margins / paddings
+  return $(window).height() - $("#grBoxHeader").height() - 
+	 $("#videoPlayerHeader").height() - 20;
+}
+
+function getWidth() {
+  // -something for the margins / paddings
+  return $(window).width() - $("#rightContent").width() - 25;
+} 
+
+function adjustVideoSize() {
+  $("#ytplayerObj").attr("height", getHeight()); 
+  $("#ytplayerObj").attr("width", getWidth()); 
+}
+
+function adjustSize() {
+  var height = $(window).height() - $('#grBoxHeader').height();
+  var width = $(window).width();
+  $("#videoPlayerBox").css("height", getHeight() + 35);
+  $("#videoPlayerBox").css("width", getWidth());
+  $("#mainContent").css("width", width);
+  $("#mainContent").css("height", height);
+  $("#songBoxes").css("height", height - $("#adsense").height() - 15);
+  adjustVideoSize();  
+}
+
+function getQRCode(url) {
+  return 'http://qrcode.kaywa.com/img.php?s=8&d=' +
+    encodeURIComponent(url);
 }
