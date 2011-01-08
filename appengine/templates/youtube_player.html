@@ -21,12 +21,16 @@
 
   var ytplayer = null;
 
-  function setupYouTubePlayer(url) {
+  function getVideoUrl(id) {
+    return "http://www.youtube.com/v/" + id + "?enablejsapi=1" +
+      "&playerapiid=ytplayer";
+  }
+
+  function setupYouTubePlayer(id) {
     var params = { allowScriptAccess: "always", wmode: "transparent" };
     var atts = { id: "ytplayerObj" };
-    swfobject.embedSWF(url + "&playerapiid=ytplayerObj&enablejsapi=1",
-        "playback", getWidth(), getHeight(),
-        "8", null, null, params, atts);
+    swfobject.embedSWF(getVideoUrl(id), "playback", getWidth(),
+      getHeight(), "8", null, null, params, atts);
   }
 
   function setSharingUrl() {
@@ -83,9 +87,9 @@
       if (req.readyState == 4 && req.status == 200) {
         var response = JSON.parse(req.responseText);
         if (ytplayer == null) {
-          setupYouTubePlayer(response.url);
+          setupYouTubePlayer(response.id);
         } else {
-          ytplayer.loadVideoByUrl(response.url);
+          ytplayer.loadVideoByUrl(getVideoUrl(response.id));
         }
 
         setCurrentSongTitle(response.title);

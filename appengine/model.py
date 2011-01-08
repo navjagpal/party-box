@@ -11,7 +11,6 @@ class Playlist(db.Model):
 
 
 class YouTubeVideo(db.Model):
-  url = db.StringProperty(required=True)
   title = db.StringProperty(required=True)
   thumbnails = db.StringListProperty()
 
@@ -19,7 +18,7 @@ class YouTubeVideo(db.Model):
 class YouTubeVote(db.Model):
   user = db.UserProperty(required=True)
   playlist = db.ReferenceProperty(Playlist, required=True)
-  url = db.StringProperty(required=True)
+  id = db.StringProperty(required=True)
 
 
 class GeneralCounterShardConfig(db.Model):

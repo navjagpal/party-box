@@ -41,7 +41,7 @@ function addSongbox(playlist, container, entry, thumbsUpCallback) {
       thumbsUpImg.setAttribute('src', '/static/images/thumbs-up.png');
       thumbsUpImg.setAttribute('class', 'voteImg');
       thumbsUpImg.onclick = function() {
-	thumbsUpCallback(playlist, entry.url, entry.title, entry.thumbnails); 
+	thumbsUpCallback(playlist, entry.id, entry.title, entry.thumbnails); 
       }
     }
     thumbsUp.appendChild(thumbsUpImg);
@@ -57,9 +57,9 @@ function addSongbox(playlist, container, entry, thumbsUpCallback) {
   row.appendChild(clearFix);
 }
 
-function addToPlaylist(playlist, url, title, thumbnails) {
+function addToPlaylist(playlist, id, title, thumbnails) {
   var query = 'p=' + encodeURIComponent(playlist) +
-    '&url=' + encodeURIComponent(url) +
+    '&id=' + encodeURIComponent(id) +
     '&title=' + encodeURIComponent(title);
   if (thumbnails.length)
     query = query + '&thumbnail=' + encodeURIComponent(thumbnails[0]);
@@ -154,7 +154,6 @@ function displayVids(playlist, vids) {
 function queueSong(playlist, id, title, thumbnail) {
   var thumbnails = [];
   thumbnails.push(thumbnail);
-  addToPlaylist(playlist, "http://www.youtube.com/v/" + id + "?enablejsapi=1&playerapiid=ytplayer",
-      unescape(title), thumbnails);
+  addToPlaylist(playlist, id, unescape(title), thumbnails);
 }
 

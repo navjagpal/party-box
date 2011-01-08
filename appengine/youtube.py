@@ -2,6 +2,7 @@ import logging
 import model
 import os
 import random
+import re
 
 from django.utils import simplejson
 
@@ -14,6 +15,50 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 
+
+def GetCounterName(playlist_key, id):
+  """Returns name for counter based on playlist and ID info.
+
+  Args:
+    playlist_key: playlist key (str) or Playlist object.
+    id: YouTube video ID.
+  Returns:
+    Name suitable to use for calling model.increment()
+  """
+  if not isinstance(playlist_key, (str, unicode)):
+    playlist_key = str(playlist_key.key())
+  return '%s%s' % (playlist_key, id)
+
+
+def GetIdFromCounterName(playlist_key, counter_name):
+  """Returns ID from the playlist_key.
+
+  Args:
+    playlist_key: playlist key (str) or Playlist object.
+    counter_name: Full counter name.
+  Returns:
+    YouTube video ID.
+  """ 
+  if not isinstance(playlist_key, (str, unicode)):
+    playlist_key = str(playlist_key.key())
+  logging.info('Key = %s', playlist_key)
+  return counter_name.split(playlist_key, 1)[1]
+
+
+def GetYouTubeService():
+  yt_service = gdata.youtube.service.YouTubeService()
+  yt_service.developer_key = ('AI39si6ZT0-zdQXj2cYiOeF5ccTbYN5Ve4pJ0GbN6QhCV'
+                              'KnTZvb-VpYfioFXeyGCjs-dHpCTQPjhwLY7xS2T_P_E1X'
+                              'YHUMv2fQ')
+  return yt_service
+
+
+def GetIdFromUrl(url):
+  m = re.match('http://[^\/]+\/v\/([^?]+)', url)
+  if m:
+    return m.group(1)
+  return None
+ 
 
 class BaseHandler(webapp.RequestHandler):
 
@@ -34,43 +79,6 @@ class BaseHandler(webapp.RequestHandler):
     path = os.path.join(os.path.dirname(__file__), template_file)
     self.response.out.write(
       template.render(path, template_values))
-
-
-def GetCounterName(playlist_key, url):
-  """Returns name for counter based on playlist and URL info.
-
-  Args:
-    playlist_key: playlist key (str) or Playlist object.
-    url: YouTube video URL.
-  Returns:
-    Name suitable to use for calling model.increment()
-  """
-  if not isinstance(playlist_key, (str, unicode)):
-    playlist_key = str(playlist_key.key())
-  return '%s%s' % (playlist_key, url)
-
-
-def GetUrlFromCounterName(playlist_key, counter_name):
-  """Returns URL from the playlist_key.
-
-  Args:
-    playlist_key: playlist key (str) or Playlist object.
-    counter_name: Full counter name.
-  Returns:
-    YouTube video URL.
-  """ 
-  if not isinstance(playlist_key, (str, unicode)):
-    playlist_key = str(playlist_key.key())
-  logging.info('Key = %s', playlist_key)
-  return counter_name.split(playlist_key, 1)[1]
-
-
-def GetYouTubeService():
-  yt_service = gdata.youtube.service.YouTubeService()
-  yt_service.developer_key = ('AI39si6ZT0-zdQXj2cYiOeF5ccTbYN5Ve4pJ0GbN6QhCV'
-                              'KnTZvb-VpYfioFXeyGCjs-dHpCTQPjhwLY7xS2T_P_E1X'
-                              'YHUMv2fQ')
-  return yt_service
 
 
 class PlaylistEditor(BaseHandler):
@@ -125,9 +133,15 @@ class Search(webapp.RequestHandler):
       results = []
       for entry in feed.entry:
         title = entry.media.title.text
-        url = entry.GetSwfUrl()
+	if not entry.GetSwfUrl():
+	  continue
+        id = GetIdFromUrl(entry.GetSwfUrl())
+	if not id:
+	  logging.warn('Problem getting ID from URL %s',
+		       entry.GetSwfUrl())
+	  continue
         thumbnails = [x.url for x in entry.media.thumbnail]
-        results.append({'title': title, 'url': url,
+        results.append({'title': title, 'id': id,
                         'thumbnails': thumbnails})
       results = simplejson.dumps(results)
       memcache.add('youtube-search:%s' % query, results)
@@ -137,11 +151,11 @@ class Search(webapp.RequestHandler):
 class Add(webapp.RequestHandler):
 
   def get(self):
-    url = self.request.get('url', None)
+    id = self.request.get('id', None)
     title = self.request.get('title', None)
     thumbnails = self.request.get('thumbnail', allow_multiple=True)
     playlist_key = self.request.get('p', None)
-    if not url or not title or not playlist_key:
+    if not id or not title or not playlist_key:
       return self.error(404)  # TODO(nav): Better error.
 
     # Is the user trying to cast a duplicate vote?
@@ -149,18 +163,18 @@ class Add(webapp.RequestHandler):
     user = users.get_current_user()
     query = model.YouTubeVote.all().filter('playlist = ', playlist)
     query.filter('user = ', user)
-    query.filter('url = ', url)
+    query.filter('id = ', id)
     if query.fetch(1):
       logging.info('User %s already voted for %s in playlist %s, not counting.',
-                   user, url, playlist_key)
+                   user, id, playlist_key)
       self.response.out.write(simplejson.dumps(
         {'added': False, 'message': 'Already voted for this song.'}))
     else:
       model.YouTubeVideo.get_or_insert(
-        url, url=url, title=title,
+        id, title=title,
         thumbnails=thumbnails)
-      model.increment(playlist_key, GetCounterName(playlist_key, url)) 
-      vote = model.YouTubeVote(user=user, playlist=playlist, url=url)
+      model.increment(playlist_key, GetCounterName(playlist_key, id)) 
+      vote = model.YouTubeVote(user=user, playlist=playlist, id=id)
       vote.put()
       self.response.out.write(simplejson.dumps({'added': True}))
 
@@ -175,19 +189,19 @@ def GetSortedPlaylist(playlist):
   query = model.YouTubeVote.all().filter('playlist = ', playlist)
   query.filter('user = ', user)
   for vote in query:
-    voted[vote.url] = True
+    voted[vote.id] = True
 
   configs = model.GeneralCounterShardConfig.all().filter(
     'playlist =', playlist)
   results = []
   for config in configs:
     # TODO(nav): Consider caching title/thumbnail info.
-    url = GetUrlFromCounterName(playlist, config.name)
-    video = model.YouTubeVideo.get_by_key_name(url)
-    results.append({'url': url, 'title': video.title,
+    id = GetIdFromCounterName(playlist, config.name)
+    video = model.YouTubeVideo.get_by_key_name(id)
+    results.append({'id': id, 'title': video.title,
                     'thumbnails': video.thumbnails,
                     'count': model.get_count(config.name),
-		    'voted': url in voted})
+		    'voted': id in voted})
   results.sort(lambda x, y: cmp(y['count'], x['count']))
   return results
 
@@ -216,18 +230,18 @@ class NextSong(webapp.RequestHandler):
     if not songs:
       self.redirect('/youtube/player/randomsong')
     else:
-      model.delete_counter(GetCounterName(playlist, songs[0]['url']))
+      model.delete_counter(GetCounterName(playlist, songs[0]['id']))
       # Delete all votes for this song too, so people can add this song back if they
       # want to.
       # TODO(nav): This could be an issue if there are many vote entries for a song
       # because it could take too long to delete them all.
       query = model.YouTubeVote.all().filter('playlist = ', playlist).filter(
-        'url = ', songs[0]['url'])
+        'id = ', songs[0]['id'])
       for result in query:
         result.delete()
 
-      video = model.YouTubeVideo.get_by_key_name(songs[0]['url'])
-      result = {'url': video.url, 'title': video.title,
+      video = model.YouTubeVideo.get_by_key_name(songs[0]['id'])
+      result = {'id': video.key().name(), 'title': video.title,
                 'thumbnails': video.thumbnails}
       self.response.out.write(simplejson.dumps(result))
 
@@ -248,7 +262,7 @@ class RandomPopularSong(webapp.RequestHandler):
       memcache.add('popular-youtube-feed', feed)
   
     entry = random.choice(feed.entry)  
-    result = {'url': entry.GetSwfUrl(),
+    result = {'id': GetIdFromUrl(entry.GetSwfUrl()),
               'title': entry.media.title.text,
               'thumbnails': [x.url for x in entry.media.thumbnail]}
     self.response.out.write(simplejson.dumps(result))
