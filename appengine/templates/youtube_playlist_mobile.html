@@ -1,0 +1,41 @@
+<html>
+<head>
+  <title>PartyBox::Playlist</title>
+
+  <meta name="viewport" content="user-scalable=no" />
+
+  <link rel="stylesheet" type="text/css"
+    href="/static/style.css" title="default"/>
+
+  <link rel="stylesheet" type="text/css"
+    href="/static/video.css"/>
+
+  <script type="text/javascript"
+    src="/static/jquery-1.4.2.min.js"></script>
+
+  <script type="text/javascript"
+    src="/static/partybox.js"></script>
+
+  <script type="text/javascript"
+    src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
+
+  <script type="text/javascript">
+
+  window.onload = function() {
+    doGetPlaylist("{{playlist}}");
+  }
+
+  $(document).ready(function() {
+    adjustSize();
+    $(window).bind('resize', adjustSize);
+  });
+  </script>
+</head>
+
+<body>
+  <div id="songBoxes">
+    <div id="playlist"></div>
+  </div>
+</body>
+
+</html>

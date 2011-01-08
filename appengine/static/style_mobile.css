@@ -7,10 +7,6 @@ body {
   background-color: #000;
   background: #000 url("/static/images/background.png") no-repeat top center;    
 }
-@media all and (max-width: 320px) {
-  body { font-size: 14px; }
-}
-
 body.homeBody {
   overflow: auto;
 }
@@ -326,7 +322,7 @@ ul.topMenuItems {
   -webkit-border-radius: 5px;
   width: auto;
   height: auto;
-  margin: 0px 10px 10px 0px;
+  margin: 0px 0px 10px 0px;
   padding: 8px;    
   background-color: #000;
   background:-webkit-gradient(linear, left bottom, left top,
@@ -342,13 +338,18 @@ ul.topMenuItems {
   -ms-filter: "progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#222222', endColorstr='#000000')"; /* IE8 */  
 }
 
-@media all and (max-width: 320px) {
-  .songBox, #moreSongs {
-    margin: 0px;
-    padding: 0px;
-  }
+.songBox:hover, #moreSongs:hover {
+  background: #444;
+  background:-webkit-gradient(linear, left bottom, left top,
+      color-stop(0.0, #222),
+      color-stop(1.0, #444)
+  );
+  background:-moz-linear-gradient(
+      center bottom,
+      #222 0%,
+      #444 100%
+  );
 }
-
 
 .homeBtn a {
   color: #fff;
@@ -416,7 +417,6 @@ ul.topMenuItems {
   width: 8%;
   padding-bottom: 6px;
 }
-
 .voteImg {
   cursor: pointer;
 }

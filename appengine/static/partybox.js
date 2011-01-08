@@ -1,11 +1,11 @@
-function doGetPlaylist(playlist, callback) {
+function doGetPlaylist(playlist) {
   var req = new XMLHttpRequest();
   var query = 'p=' + encodeURIComponent(playlist);
   req.open('GET', '/youtube/playlist?' + query, true);
   req.onreadystatechange = function() {
     if (req.readyState == 4 && req.status == 200) {
       var response = JSON.parse(req.responseText);
-      callback(playlist, response);
+      updatePlaylist(playlist, response);
     }
   }
   req.send(null);
@@ -73,7 +73,7 @@ function addToPlaylist(playlist, url, title, thumbnails) {
       }
       // TODO(nav): Update the list differently, maybe using
       // a timer or the channel API.
-      doGetPlaylist(playlist, updatePlaylist);
+      doGetPlaylist(playlist);
     }
   }
   req.send(null);

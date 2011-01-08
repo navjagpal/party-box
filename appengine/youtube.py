@@ -15,6 +15,27 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 
+class BaseHandler(webapp.RequestHandler):
+
+  def __init__(self, desktop_template, mobile_template=None):
+    super(BaseHandler, self).__init__()
+    self._desktop_template = desktop_template
+    self._mobile_template = mobile_template
+ 
+  def _IsMobileRequest(self):
+    # TODO(nav): Implement this for real.
+    return 'Android' in self.request.user_agent
+
+  def _WriteResponse(self, template_values):
+    if self._mobile_template and self._IsMobileRequest():
+      template_file = self._mobile_template
+    else:
+      template_file = self._desktop_template
+    path = os.path.join(os.path.dirname(__file__), template_file)
+    self.response.out.write(
+      template.render(path, template_values))
+
+
 def GetCounterName(playlist_key, url):
   """Returns name for counter based on playlist and URL info.
 
@@ -52,7 +73,12 @@ def GetYouTubeService():
   return yt_service
 
 
-class PlaylistEditor(webapp.RequestHandler):
+class PlaylistEditor(BaseHandler):
+
+  def __init__(self):
+    super(PlaylistEditor, self).__init__(
+      'templates/youtube_playlist.html',
+      'templates/youtube_playlist_mobile.html')
 
   def get(self):
     playlist_key = self.request.get('p', None)
@@ -65,10 +91,7 @@ class PlaylistEditor(webapp.RequestHandler):
       logging.error('Invalid playlist_key')
       return self.error(404)  # TODO(nav): Better error.
 
-    path = os.path.join(os.path.dirname(__file__),
-      'templates/youtube_playlist.html')
-    self.response.out.write(
-      template.render(path, {'playlist': playlist_key}))
+    self._WriteResponse({'playlist': playlist_key})
 
 
 class Player(webapp.RequestHandler):

@@ -20,7 +20,7 @@
   <script type="text/javascript">
 
   window.onload = function() {
-    doGetPlaylist("{{playlist}}", updatePlaylist);
+    doGetPlaylist("{{playlist}}");
     document.getElementById('search-box').focus();
     document.getElementById('search-box').onfocus = function() {
       $("#vid-results").show();

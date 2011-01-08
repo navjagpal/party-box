@@ -96,7 +96,7 @@
         nowPlaying.children[0].setAttribute('class', 'songBox nowPlaying');
 
         // Update the playlist.
-        doGetPlaylist("{{playlist}}", updatePlaylist);
+        doGetPlaylist("{{playlist}}");
       }
     }
     req.send(null);
@@ -110,7 +110,7 @@
   });
 
   window.onload = function() {
-    doGetPlaylist("{{playlist}}", updatePlaylist);
+    doGetPlaylist("{{playlist}}");
     document.getElementById('search-box').focus();
     document.getElementById('search-box').onfocus = function() {
       $("#vid-results").show();
