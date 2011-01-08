@@ -23,7 +23,6 @@ class BaseHandler(webapp.RequestHandler):
     self._mobile_template = mobile_template
  
   def _IsMobileRequest(self):
-    return True
     # TODO(nav): Implement this for real.
     return 'Android' in self.request.user_agent
 
