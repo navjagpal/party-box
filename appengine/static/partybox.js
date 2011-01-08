@@ -11,7 +11,7 @@ function doGetPlaylist(playlist) {
   req.send(null);
 }
 
-function addSongbox(playlist, container, entry, thumbsUpCallback) {
+function createSongbox(playlist, entry) {
   var clickWrapper = document.createElement('div');
   clickWrapper.setAttribute('class', 'clickWrapper');
   if (entry.thumbnails.length) {
@@ -29,32 +29,38 @@ function addSongbox(playlist, container, entry, thumbsUpCallback) {
   clickWrapper.appendChild(songDetails);
   var row = document.createElement('div');
   row.setAttribute('class', 'songBox');
+  row.setAttribute('id', 'songBox-' + entry.id);
   row.appendChild(clickWrapper);
 
-  if (thumbsUpCallback != undefined) {
-    var thumbsUp = document.createElement('div');
-    thumbsUp.setAttribute('class', 'thumbs thumbUpSong');
-    var thumbsUpImg = document.createElement('img');
-    if (entry.voted) {
-      thumbsUpImg.setAttribute('src', '/static/images/voted.png');
-    } else {
-      thumbsUpImg.setAttribute('src', '/static/images/thumbs-up.png');
-      thumbsUpImg.setAttribute('class', 'voteImg');
-      thumbsUpImg.onclick = function() {
-	thumbsUpCallback(playlist, entry.id, entry.title, entry.thumbnails); 
-      }
+  var thumbsUp = document.createElement('div');
+  thumbsUp.setAttribute('class', 'thumbs thumbUpSong');
+  var thumbsUpImg = document.createElement('img');
+  if (entry.voted) {
+    thumbsUpImg.setAttribute('src', '/static/images/voted.png');
+  } else if (!entry.nowPlaying && !entry.random) {
+    thumbsUpImg.setAttribute('src', '/static/images/thumbs-up.png');
+    thumbsUpImg.setAttribute('class', 'voteImg');
+    thumbsUpImg.onclick = function() {
+      addToPlaylist(playlist, entry.id, entry.title, entry.thumbnails); 
     }
-    thumbsUp.appendChild(thumbsUpImg);
+  }
+  thumbsUp.appendChild(thumbsUpImg);
+  // Random songs don't have counts.
+  if (entry.count != undefined) {
     thumbsUp.appendChild(document.createTextNode(
       entry.count));
-    row.appendChild(thumbsUp);
   }
+  row.appendChild(thumbsUp);
 
-  container.appendChild(row);
   var clearFix = document.createElement('div');
   clearFix.setAttribute('class', 'clearfix');
   clearFix.appendChild(document.createTextNode(' '));
   row.appendChild(clearFix);
+  return row;
+}
+
+function addSongbox(playlist, container, entry) {
+  container.appendChild(createSongbox(playlist, entry));
 }
 
 function addToPlaylist(playlist, id, title, thumbnails) {
@@ -71,19 +77,28 @@ function addToPlaylist(playlist, id, title, thumbnails) {
       if (response.message) {
 	alert(response.message);
       }
-      // TODO(nav): Update the list differently, maybe using
-      // a timer or the channel API.
-      doGetPlaylist(playlist);
+      updateOrAddSongbox(playlist, response.entry);
     }
   }
   req.send(null);
+}
+
+function updateOrAddSongbox(playlist, entry) {
+  var songBox = document.getElementById('songBox-' + entry.id);
+  if (songBox == undefined) {
+    var songBoxes = document.getElementById('playlist');
+    addSongbox(playlist, songBoxes, entry);
+  } else {
+    songBox.parentNode.replaceChild(createSongbox(playlist, entry),
+      songBox); 
+  }
 }
 
 function updatePlaylist(playlist, results) {
   var songBoxes = document.getElementById('playlist');
   songBoxes.innerHTML = '';
   for (x in results) {
-    addSongbox(playlist, songBoxes, results[x], addToPlaylist);
+    addSongbox(playlist, songBoxes, results[x]);
   }
 }
 

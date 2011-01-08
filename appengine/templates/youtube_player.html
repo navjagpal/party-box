@@ -98,9 +98,6 @@
         nowPlaying.innerHTML = '';
         addSongbox("{{playlist}}", nowPlaying, response);
         nowPlaying.children[0].setAttribute('class', 'songBox nowPlaying');
-
-        // Update the playlist.
-        doGetPlaylist("{{playlist}}");
       }
     }
     req.send(null);
@@ -115,6 +112,10 @@
 
   window.onload = function() {
     doGetPlaylist("{{playlist}}");
+    // Update the playlist every 30s. We may need to add some random time
+    // here to avoid everyone making this request at the same time.
+    setInterval(function() { doGetPlaylist("{{playlist}}"); },
+      30000);
     document.getElementById('search-box').focus();
     document.getElementById('search-box').onfocus = function() {
       $("#vid-results").show();

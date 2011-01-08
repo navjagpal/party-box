@@ -176,7 +176,14 @@ class Add(webapp.RequestHandler):
       model.increment(playlist_key, GetCounterName(playlist_key, id)) 
       vote = model.YouTubeVote(user=user, playlist=playlist, id=id)
       vote.put()
-      self.response.out.write(simplejson.dumps({'added': True}))
+
+      # Return the current count for this entry, along with metadata.
+      entry = { 'id': id, 'title': title, 'thumbnails': thumbnails,
+		'count': model.get_count(GetCounterName(
+		  playlist, id)), 'voted': True }
+
+      self.response.out.write(simplejson.dumps(
+	{'added': True, 'entry': entry}))
 
 
 def GetSortedPlaylist(playlist):
@@ -242,7 +249,9 @@ class NextSong(webapp.RequestHandler):
 
       video = model.YouTubeVideo.get_by_key_name(songs[0]['id'])
       result = {'id': video.key().name(), 'title': video.title,
-                'thumbnails': video.thumbnails}
+                'thumbnails': video.thumbnails,
+		'nowPlaying': True,
+		'count': songs[0]['count']}
       self.response.out.write(simplejson.dumps(result))
 
 
@@ -264,6 +273,7 @@ class RandomPopularSong(webapp.RequestHandler):
     entry = random.choice(feed.entry)  
     result = {'id': GetIdFromUrl(entry.GetSwfUrl()),
               'title': entry.media.title.text,
+	      'random': True,
               'thumbnails': [x.url for x in entry.media.thumbnail]}
     self.response.out.write(simplejson.dumps(result))
 
