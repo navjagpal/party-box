@@ -120,6 +120,7 @@ function getQRCode(url) {
 }
 
 function ytsearch(playlist, query) {
+  alert('search');
   var ytUrl = 'http://gdata.youtube.com/feeds/api/videos?q=' +
     encodeURIComponent(query) + '&format=5&v=2&alt=jsonc&category=Music&max_results=10' +
     '&orderBy=relevance';

@@ -23,6 +23,15 @@
 
   window.onload = function() {
     doGetPlaylist("{{playlist}}");
+    document.getElementById('searchButton').onclick = function() {
+      ytsearch('{{playlist}}', document.getElementById('search-box').value);
+      $("#vid-results").show();
+      document.getElementById('closeButton').style.visibility = 'visible';
+    }
+    document.getElementById('closeButton').onclick = function() {
+      $("#vid-results").hide();
+      this.style.visibility = 'hidden';
+    }
   }
 
   $(document).ready(function() {
@@ -33,6 +42,16 @@
 </head>
 
 <body>
+  <div id="header">
+    <span id="search-wrapper">
+      <input type="text" id="search-box"
+	onkeydown="if (event.keyCode == 13) document.getElementById('searchButton').click();"/>
+    </span>
+    <button id="searchButton" type="button">Search</button>
+    <button id="closeButton" type="button"
+      style="visibility: hidden">Close</button>
+  </div>
+  <div id="vid-results"></div>
   <div id="songBoxes">
     <div id="playlist"></div>
   </div>

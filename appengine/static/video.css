@@ -7,6 +7,9 @@
   font-size: 11px;
   margin-left: 15px;
 }
+@media all and (max-width: 320px) {
+  #search-box { width: 250x; font-size: 14px; margin-left: 5px; }
+}
 
 #search-icon-wrapper {
   float: left;
@@ -19,6 +22,9 @@
   background: -webkit-gradient(linear, left top, left bottom, from(#555), to(#333));
   position: absolute;
   z-index: 2;
+}
+@media all and (max-width: 320px) {
+  #vid-results { width: 100%; }
 }
 
 .vid-item {
