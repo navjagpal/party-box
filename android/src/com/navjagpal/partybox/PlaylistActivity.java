@@ -47,8 +47,8 @@ public class PlaylistActivity extends ListActivity {
 							AccountManager.KEY_AUTHTOKEN).toString();
 					Log.i(PartyBox.LTAG, "Account manager callback with token " + authToken);
 							
-					//mClient = new PartyBoxClient(Uri.parse(SERVER), authToken);
-					mClient = new TestingPartyBoxClient(Uri.parse(SERVER), authToken);
+					mClient = new PartyBoxClient(Uri.parse(SERVER), authToken);
+					//mClient = new TestingPartyBoxClient(Uri.parse(SERVER), authToken);
 					displayPlaylist();
 				} catch (OperationCanceledException e) {
 					// TODO Auto-generated catch block
@@ -70,7 +70,9 @@ public class PlaylistActivity extends ListActivity {
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
     	Song song = (Song) l.getItemAtPosition(position);
-    	Log.i(PartyBox.LTAG, "Song clicked " + song.title);
+    	if (!song.voted) { 
+    		new VoteTask().execute(song);
+    	}
     }
     
     private void displayPlaylist() {
@@ -96,6 +98,29 @@ public class PlaylistActivity extends ListActivity {
 		}
     }
     
+    private class VoteTask extends AsyncTask<Song, Song, Void> {
+
+		@Override
+		protected Void doInBackground(Song... songs) {
+			for (Song song : songs) {
+				Song newSong = mClient.vote(song);
+				if (newSong != null) {
+					publishProgress(newSong);
+				}
+			}
+			return null;
+		}
+		
+		@Override
+		protected void onProgressUpdate(Song... songs)  {
+			PlaylistAdapter adapter = (PlaylistAdapter) getListAdapter();
+			for (Song song : songs) {
+				adapter.updateSong(song);
+			}
+		}
+    	
+    }
+    
     private class PlaylistAdapter extends BaseAdapter {
     	
     	private Context mContext;
@@ -105,6 +130,16 @@ public class PlaylistActivity extends ListActivity {
     		mContext = context;
     		mPlaylist = playlist;
     	}
+
+		public void updateSong(Song newSong) {
+			for (Song song : mPlaylist) {
+				if (song.id == newSong.id) {
+					song.count = newSong.count;
+					song.voted = newSong.voted;
+					notifyDataSetChanged();
+				}
+			}
+		}
 
 		@Override
 		public int getCount() {
@@ -136,6 +171,7 @@ public class PlaylistActivity extends ListActivity {
     
     private class SongView extends LinearLayout {
     	private TextView mTitleView;
+    	private TextView mCountView;
     	public SongView(Context context, Song song) {
     		super(context);
     		LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(
@@ -144,11 +180,19 @@ public class PlaylistActivity extends ListActivity {
     		layoutInflater.inflate(R.layout.song, this);
 
     		mTitleView = (TextView) findViewById(R.id.title);
+    		mCountView = (TextView) findViewById(R.id.count);
     		setSong(song);
     	}
     	
     	public void setSong(Song song) {
     		mTitleView.setText(song.title);
+    		mCountView.setText(String.valueOf(song.count));
+    		
+    		if (song.voted) {
+    			// TODO(nav): This is a horrible red. Need to find a better way of indicating
+    			// that user has already voted for this song.
+    			setBackgroundColor(0xFFFF0000);
+    		}
     	}
     }
 }

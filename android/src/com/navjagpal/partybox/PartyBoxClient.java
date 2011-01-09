@@ -2,6 +2,7 @@ package com.navjagpal.partybox;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -82,6 +83,8 @@ public class PartyBoxClient {
 					JSONObject entry = json.getJSONObject(i);
 					song.id = entry.getString("id");
 					song.title = entry.getString("title");
+					song.count = entry.getInt("count");
+					song.voted = entry.getBoolean("voted");
 					playlist.add(song);
 				}
 			}
@@ -97,6 +100,53 @@ public class PartyBoxClient {
 		}
 		
 		return playlist;
+	}
+	
+	public Song vote(Song song) {
+		if (!mAuthenticated)
+			authenticate();
+		
+		try {
+			String query = "id=" + song.id + "&title=" +
+			URLEncoder.encode(song.title, "utf8");
+			for (String thumbnail : song.thumbnails) {
+				query += "&thumbnail=" + URLEncoder.encode(thumbnail, "utf8");
+			}
+			HttpGet get = new HttpGet("https://party-box.appspot.com/youtube/add?" + query);
+			HttpResponse response;
+			response = mHttpClient.execute(get);
+			HttpEntity entity = response.getEntity();
+			Log.i(PartyBox.LTAG, "Get response: " + response.getStatusLine());
+			StringBuffer out = new StringBuffer();
+			byte[] b = new byte[4096];
+			InputStream in = entity.getContent();
+			for (int n; (n = in.read(b)) != -1;) {
+		        out.append(new String(b, 0, n));
+		    }
+			Log.i(PartyBox.LTAG, "Raw resposne = " + out.toString());
+			JSONObject json = new JSONObject(out.toString());
+			Log.i(PartyBox.LTAG, "JSon = " + json.toString());
+			
+			if (json != null) {
+				JSONObject entry = json.getJSONObject("entry");
+				Song updatedSong = new Song();
+				updatedSong.id = entry.getString("id");
+				updatedSong.title = entry.getString("title");
+				updatedSong.voted = entry.getBoolean("voted");
+				return updatedSong;
+			}
+		} catch (ClientProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
 	
 
