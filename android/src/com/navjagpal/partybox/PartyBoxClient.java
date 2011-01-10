@@ -2,7 +2,6 @@ package com.navjagpal.partybox;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLEncoder;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -22,23 +21,27 @@ import android.util.Log;
 
 public class PartyBoxClient {
 	
-	private Uri mServer;
+	private static final Uri SERVER_URI = Uri.parse("https://party-box.appspot.com");
+
 	private String mAuthToken;
 	private DefaultHttpClient mHttpClient;
 	private boolean mAuthenticated;
 	
-	public PartyBoxClient(Uri server, String authToken) {
+	public PartyBoxClient(String authToken) {
 		mHttpClient = new DefaultHttpClient();
-		mServer = server;
 		mAuthToken = authToken;
 		mAuthenticated = false;
 	}
 	
 	private void authenticate() {
 		// TODO(nav): Store auth cookies.
-		HttpGet get = new HttpGet(
-				"https://party-box.appspot.com/_ah/login?continue=" +
-				"http://localhost/&auth=" + mAuthToken);
+		HttpGet get = new HttpGet(SERVER_URI.buildUpon().
+				appendPath("_ah").
+				appendPath("login").
+				appendQueryParameter(
+						"continue", "http://localhost/").
+				appendQueryParameter(
+						"auth", mAuthToken).toString());
 		try {
 			mHttpClient.getParams().setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, false);
 			HttpResponse response = mHttpClient.execute(get);
@@ -60,7 +63,9 @@ public class PartyBoxClient {
 	public List<Song> GetPlaylist() {
 		if (!mAuthenticated)
 			authenticate();
-		HttpGet get = new HttpGet("https://party-box.appspot.com/youtube/playlist");
+		HttpGet get = new HttpGet(SERVER_URI.buildUpon()
+				.appendPath("youtube")
+				.appendPath("playlist").toString());
 		HttpResponse response;
 		List<Song> playlist = new LinkedList<Song>();
 		try {
@@ -107,12 +112,18 @@ public class PartyBoxClient {
 			authenticate();
 		
 		try {
-			String query = "id=" + song.id + "&title=" +
-			URLEncoder.encode(song.title, "utf8");
+			Uri.Builder builder = SERVER_URI.buildUpon()
+				.appendPath("youtube")
+				.appendPath("add")
+				.appendQueryParameter("id", song.id)
+				.appendQueryParameter("title", song.title);
+			
+		
 			for (String thumbnail : song.thumbnails) {
-				query += "&thumbnail=" + URLEncoder.encode(thumbnail, "utf8");
+				builder.appendQueryParameter("thumbnail", thumbnail);
 			}
-			HttpGet get = new HttpGet("https://party-box.appspot.com/youtube/add?" + query);
+			HttpGet get = new HttpGet(builder.toString());
+			
 			HttpResponse response;
 			response = mHttpClient.execute(get);
 			HttpEntity entity = response.getEntity();

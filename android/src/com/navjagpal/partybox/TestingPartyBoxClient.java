@@ -3,19 +3,18 @@ package com.navjagpal.partybox;
 import java.util.LinkedList;
 import java.util.List;
 
-import android.net.Uri;
 import android.util.Log;
 
 public class TestingPartyBoxClient extends PartyBoxClient {
 	
-	public TestingPartyBoxClient(Uri server, String authToken) {
-		super(server, authToken);
+	public TestingPartyBoxClient(String authToken) {
+		super(authToken);
 	}
 	
 	public List<Song> GetPlaylist() {
 		List<Song> playlist = new LinkedList<Song>();
 		Song song1 = new Song();
-		song1.id = "AAA";
+		song1.id = "sOnqjkJTMaA";
 		song1.title = "Thriller";
 		song1.count = 5;
 		playlist.add(song1);

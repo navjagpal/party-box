@@ -11,28 +11,37 @@ import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.app.ListActivity;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 public class PlaylistActivity extends ListActivity {
 	
-    private static final String SERVER = new String("http://party-box.appspot.com");
+	private static final int MENU_PLAY = 0;
     private PartyBoxClient mClient;
 
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+        setContentView(R.layout.playlist);
+              
         // Grab an auth token for GAE.
         AccountManager accountManager = AccountManager.get(this);
         Account[] accounts = accountManager.getAccountsByType("com.google");
@@ -47,8 +56,8 @@ public class PlaylistActivity extends ListActivity {
 							AccountManager.KEY_AUTHTOKEN).toString();
 					Log.i(PartyBox.LTAG, "Account manager callback with token " + authToken);
 							
-					mClient = new PartyBoxClient(Uri.parse(SERVER), authToken);
-					//mClient = new TestingPartyBoxClient(Uri.parse(SERVER), authToken);
+					mClient = new PartyBoxClient(authToken);
+					//mClient = new TestingPartyBoxClient(authToken);
 					displayPlaylist();
 				} catch (OperationCanceledException e) {
 					// TODO Auto-generated catch block
@@ -61,10 +70,12 @@ public class PlaylistActivity extends ListActivity {
 					e.printStackTrace();
 				}
 			}
-        	
         };
         accountManager.getAuthToken(
         		account, "ah", null, this, callback, null);
+        
+        // Inform the list we provide context menus for items
+        getListView().setOnCreateContextMenuListener(this);
     }
     
     @Override
@@ -75,12 +86,59 @@ public class PlaylistActivity extends ListActivity {
     	}
     }
     
+    @Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.playlist_options_menu, menu);
+        return true;
+    }
+    
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+    	menu.add(0, MENU_PLAY, 0, R.string.play);
+    }
+    
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+      AdapterView.AdapterContextMenuInfo info;
+      info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+    
+      switch (item.getItemId()) {
+      case MENU_PLAY:
+    	  Song song = (Song) getListAdapter().getItem(info.position);
+    	  startActivity(new Intent(Intent.ACTION_VIEW,
+    			  Uri.parse("http://www.youtube.com/watch?v=" + song.id)));
+    	  return true;
+      }
+      
+      return false;
+    }
+      
+      
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+        case R.id.refresh:
+        	new GetPlaylistTask().execute();
+        	return true;
+        }
+        return false;
+    }
+    
     private void displayPlaylist() {
     	new GetPlaylistTask().execute();
     }
     
 
     private class GetPlaylistTask extends AsyncTask<Void, Void, List<Song>> {
+    	
+    	@Override
+    	protected void onPreExecute() {
+    		ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
+    		progressBar.setVisibility(View.VISIBLE);
+    	}
 
 		@Override
 		protected List<Song> doInBackground(Void... arg0) {
@@ -92,6 +150,8 @@ public class PlaylistActivity extends ListActivity {
 		
 		@Override
 		protected void onPostExecute(List<Song> playlist) {
+			ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
+    		progressBar.setVisibility(View.GONE);
 			PlaylistAdapter adapter = new PlaylistAdapter(
 					PlaylistActivity.this, playlist);
 	    	setListAdapter(adapter);
@@ -172,8 +232,10 @@ public class PlaylistActivity extends ListActivity {
     private class SongView extends LinearLayout {
     	private TextView mTitleView;
     	private TextView mCountView;
+    	
     	public SongView(Context context, Song song) {
     		super(context);
+    		
     		LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(
     				Context.LAYOUT_INFLATER_SERVICE);
     		  
@@ -187,11 +249,12 @@ public class PlaylistActivity extends ListActivity {
     	public void setSong(Song song) {
     		mTitleView.setText(song.title);
     		mCountView.setText(String.valueOf(song.count));
-    		
+			
+    		ImageView statusImage = (ImageView) findViewById(R.id.statusImage);
     		if (song.voted) {
-    			// TODO(nav): This is a horrible red. Need to find a better way of indicating
-    			// that user has already voted for this song.
-    			setBackgroundColor(0xFFFF0000);
+    			statusImage.setImageResource(R.drawable.voted);
+    		} else {
+    			statusImage.setImageResource(R.drawable.thumbsup);
     		}
     	}
     }

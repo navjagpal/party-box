@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, PartyBox!</string>
+    
     <string name="app_name">Party Box</string>
+<string name="playlistButton">Playlist</string>
+<string name="refresh">Refresh</string>
+<string name="play">Play</string>
 </resources>
