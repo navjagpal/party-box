@@ -90,6 +90,10 @@ public class PartyBoxClient {
 					song.title = entry.getString("title");
 					song.count = entry.getInt("count");
 					song.voted = entry.getBoolean("voted");
+					JSONArray thumbnails = entry.getJSONArray("thumbnails");
+					for (int j = 0; j < thumbnails.length(); j++) {
+						song.thumbnails.add(thumbnails.getString(j));
+					}
 					playlist.add(song);
 				}
 			}

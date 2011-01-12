@@ -1,6 +1,9 @@
 package com.navjagpal.partybox;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 import android.accounts.Account;
@@ -12,6 +15,7 @@ import android.accounts.OperationCanceledException;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -155,6 +159,10 @@ public class PlaylistActivity extends ListActivity {
 			PlaylistAdapter adapter = new PlaylistAdapter(
 					PlaylistActivity.this, playlist);
 	    	setListAdapter(adapter);
+	    	for (Song song : playlist) {
+	    		// TODO(nav): This should be controlled by a preference.
+	    		new ThumbnailTask().execute(song);
+	    	}
 		}
     }
     
@@ -171,6 +179,40 @@ public class PlaylistActivity extends ListActivity {
 			return null;
 		}
 		
+		@Override
+		protected void onProgressUpdate(Song... songs)  {
+			PlaylistAdapter adapter = (PlaylistAdapter) getListAdapter();
+			for (Song song : songs) {
+				adapter.updateSong(song);
+			}
+		}	
+    }
+    
+    private class ThumbnailTask extends AsyncTask<Song, Song, Song> {
+
+		@Override
+		protected Song doInBackground(Song... songs) {
+			for (Song song: songs) {
+				if (song.thumbnails.size() > 0) {
+					try {
+						HttpURLConnection conn = (HttpURLConnection)(new URL(song.thumbnails.get(0)).openConnection());
+						conn.setDoInput(true);
+						conn.connect();
+						song.thumbnailImages.add(BitmapFactory.decodeStream(conn.getInputStream()));
+						publishProgress(song);
+					} catch (MalformedURLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+			// TODO Auto-generated method stub
+			return null;
+		}
+
 		@Override
 		protected void onProgressUpdate(Song... songs)  {
 			PlaylistAdapter adapter = (PlaylistAdapter) getListAdapter();
@@ -196,8 +238,10 @@ public class PlaylistActivity extends ListActivity {
 				if (song.id == newSong.id) {
 					song.count = newSong.count;
 					song.voted = newSong.voted;
+					song.thumbnails = newSong.thumbnails;
+					song.thumbnailImages = newSong.thumbnailImages;
 					notifyDataSetChanged();
-				}
+				} 
 			}
 		}
 
@@ -255,6 +299,11 @@ public class PlaylistActivity extends ListActivity {
     			statusImage.setImageResource(R.drawable.voted);
     		} else {
     			statusImage.setImageResource(R.drawable.thumbsup);
+    		}
+    		
+    		if (song.thumbnailImages.size() > 0) {
+    			ImageView thumbnailImage = (ImageView) findViewById(R.id.thumbnail);
+    			thumbnailImage.setImageBitmap(song.thumbnailImages.get(0));
     		}
     	}
     }

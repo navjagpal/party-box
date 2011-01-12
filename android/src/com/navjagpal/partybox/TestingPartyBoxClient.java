@@ -22,6 +22,7 @@ public class TestingPartyBoxClient extends PartyBoxClient {
 		song2.id = "BBB";
 		song2.title = "Beat It";
 		song2.count = 3;
+		song2.thumbnails.add("http://i.ytimg.com/vi/4fndeDfaWCg/default.jpg");
 		playlist.add(song2);
 		return playlist;
 	}
