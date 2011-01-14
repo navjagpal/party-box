@@ -17,6 +17,7 @@
   <script type="text/javascript">
 
   var ytplayer = null;
+  var shortLink = "{{link}}";
 
   function getVideoUrl(id) {
     return "http://www.youtube.com/v/" + id + "?enablejsapi=1" +
@@ -31,23 +32,35 @@
   }
 
   function setSharingUrl() {
-    var url = window.location.protocol + '//' + window.location.host +
-      '/playlist?p={{playlist}}';
-
     var img = document.createElement('img');
-    img.setAttribute('src', getQRCode(url));
+    img.setAttribute('src', getQRCode(shortLink));
     img.setAttribute('class', 'qrcodeImg');
     var imgLink = document.createElement('a');
-    imgLink.setAttribute('href', url);
+    imgLink.setAttribute('href', shortLink);
     imgLink.setAttribute('target', '_blank');
     imgLink.appendChild(img);
     document.getElementById('sharing').appendChild(imgLink);
 
     var link = document.createElement('a');
-    link.setAttribute('href', url);
+    link.setAttribute('href', shortLink);
     link.setAttribute('target', '_blank');
-    link.appendChild(document.createTextNode(url));
+    link.appendChild(document.createTextNode(shortLink));
     document.getElementById('sharing').appendChild(link);
+  }
+
+  function getSharingInfo() {
+    var req = new XMLHttpRequest();
+    var query = 'baseUrl=' + encodeURIComponent(
+      window.location.protocol + '//' + window.location.host);
+    req.open('GET', '/youtube/playlist/sharing?' + query, true);
+    req.onreadystatechange = function() {
+      if (req.readyState == 4 && req.status == 200) {
+	var response = JSON.parse(req.responseText);
+	shortLink = response.link;
+	setSharingUrl();
+      }
+    }
+    req.send(null);
   }
 
   function onYouTubePlayerReady(playerId) {
@@ -104,7 +117,11 @@
     adjustSize();
     $(window).bind('resize', adjustSize);
     playNextSong();
-    setSharingUrl();
+    if (shortLink == "None") {
+      getSharingInfo();
+    } else {
+      setSharingUrl();
+    }
   });
 
   window.onload = function() {

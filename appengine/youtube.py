@@ -10,10 +10,16 @@ import gdata.youtube
 import gdata.youtube.service
 
 from google.appengine.api import memcache
+from google.appengine.api import urlfetch
 from google.appengine.api import users
+from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
+
+
+SHORTENER_URL = ('https://www.googleapis.com/urlshortener/v1/url'
+		 '?key=AIzaSyA8OdrL9Xh0ebjKWOMVrnzRP_pw9TaTuws')
 
 
 def GetCounterName(playlist_key, id):
@@ -110,7 +116,49 @@ class Player(webapp.RequestHandler):
     path = os.path.join(os.path.dirname(__file__),
       'templates/youtube_player.html')
     self.response.out.write(
-      template.render(path, {'playlist': str(playlist.key())}))
+      template.render(path, {'playlist': str(playlist.key()),
+			     'link': playlist.link}))
+
+
+class SharingInfo(webapp.RequestHandler):
+  """Returns information related to sharing the playlist."""
+
+  def _GetShortUrl(self, playlist_id):
+    """Makes request to Google URL Shortener and returns result.
+    
+    Args:
+      playlist_id: Playlist id, str.
+    Returns:
+      Short URL, str or None if error.
+    """
+    base_url = self.request.get('baseUrl', 'http://party-box.appspot.com')
+    url = '%s/playlist?p=%s' % (base_url, playlist_id)
+    result = urlfetch.fetch(
+      url=SHORTENER_URL,
+      headers={'Content-Type': 'application/json'},
+      method=urlfetch.POST,
+      payload=simplejson.dumps({'longUrl': url}))
+    if result.status_code == 200:
+      logging.info('Result = %s', result.content)
+      response = simplejson.loads(result.content)
+      return response['id']
+    else:
+      return None
+
+  def get(self):
+    user = users.get_current_user()
+    playlist = model.Playlist.get_or_insert(user.user_id(), owner=user)
+    sharing_info = {}
+    if playlist.link:
+      sharing_info['link'] = playlist.link
+    else:
+      # TODO(nav): Check for error here.
+      short_link = self._GetShortUrl(str(playlist.key()))
+      if short_link is not None:
+	playlist.link = db.Link(short_link)
+	playlist.put()
+      sharing_info['link'] = short_link
+    self.response.out.write(simplejson.dumps(sharing_info))
 
 
 class Search(webapp.RequestHandler):
@@ -282,6 +330,7 @@ application = webapp.WSGIApplication(
   [('/playlist', PlaylistEditor),
    ('/youtube/search', Search),
    ('/youtube/add', Add),
+   ('/youtube/playlist/sharing', SharingInfo),
    ('/youtube/playlist', Playlist),
    ('/player', Player),
    ('/youtube/player/next', NextSong),

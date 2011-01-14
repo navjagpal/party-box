@@ -8,6 +8,7 @@ from google.appengine.ext import db
 
 class Playlist(db.Model):
   owner = db.UserProperty(required=True)
+  link = db.LinkProperty()
 
 
 class YouTubeVideo(db.Model):
