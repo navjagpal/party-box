@@ -32,11 +32,16 @@
   }
 
   function setSharingUrl() {
+    var longLink = window.location.protocol + '//' + window.location.host +
+      '/playlist?p={{playlist}}';
+
+    // Use long link for the image so that devices can try to do
+    // something smart based on the URL.
     var img = document.createElement('img');
     img.setAttribute('src', getQRCode(shortLink));
     img.setAttribute('class', 'qrcodeImg');
     var imgLink = document.createElement('a');
-    imgLink.setAttribute('href', shortLink);
+    imgLink.setAttribute('href', longLink);
     imgLink.setAttribute('target', '_blank');
     imgLink.appendChild(img);
     document.getElementById('sharing').appendChild(imgLink);
