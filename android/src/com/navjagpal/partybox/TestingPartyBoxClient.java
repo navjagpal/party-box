@@ -37,5 +37,9 @@ public class TestingPartyBoxClient extends PartyBoxClient {
 		Log.i(PartyBox.LTAG, "Voting on song " + song.title);
 		return newSong;
 	}
+	
+	public List<Song> Search(String string) {
+		return GetPlaylist();
+	}
 
 }

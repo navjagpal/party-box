@@ -112,7 +112,7 @@ public class PlaylistActivity extends ListActivity {
     	  Song song = (Song) getListAdapter().getItem(info.position);
     	  startActivity(new Intent(Intent.ACTION_VIEW,
     			  Uri.parse("http://www.youtube.com/watch?v=" + song.id)));
-    	  return true;
+    	  return true;    	  
       }
       
       return false;
@@ -127,6 +127,10 @@ public class PlaylistActivity extends ListActivity {
         case R.id.refresh:
         	new GetPlaylistTask().execute();
         	return true;
+        case R.id.add:
+        	Intent intent = new Intent();
+			intent.setClassName("com.navjagpal.partybox", "com.navjagpal.partybox.SearchActivity");
+			startActivityForResult(intent, 0);
         }
         return false;
     }
