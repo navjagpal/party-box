@@ -215,9 +215,15 @@ class Add(webapp.RequestHandler):
     title = self.request.get('title', None)
     thumbnails = self.request.get('thumbnail', allow_multiple=True)
     playlist_key = self.request.get('p', None)
-    if not id or not title or not playlist_key:
+    if not id or not title:
       return self.error(404)  # TODO(nav): Better error.
 
+    # If not supplied, return the users own playlist.
+    if playlist_key is None:
+      user = users.get_current_user()
+      playlist = model.Playlist.get_or_insert(user.user_id(), owner=user)
+      playlist_key = str(playlist.key())
+    
     # Is the user trying to cast a duplicate vote?
     playlist = model.Playlist.get(playlist_key)
     user = users.get_current_user()
@@ -277,8 +283,11 @@ class Playlist(webapp.RequestHandler):
 
   def get(self):
     playlist_key = self.request.get('p', None)
+    # If not supplied, return the users own playlist.
     if playlist_key is None:
-      return self.error(404)  # TODO(nav): Better error.
+      user = users.get_current_user()
+      playlist = model.Playlist.get_or_insert(user.user_id(), owner=user)
+      playlist_key = str(playlist.key())
 
     results = GetSortedPlaylist(playlist_key)
     self.response.out.write(simplejson.dumps(results))
