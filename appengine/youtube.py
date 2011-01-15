@@ -9,6 +9,7 @@ from django.utils import simplejson
 import gdata.youtube
 import gdata.youtube.service
 
+from google.appengine.api import mail
 from google.appengine.api import memcache
 from google.appengine.api import urlfetch
 from google.appengine.api import users
@@ -66,6 +67,29 @@ def GetIdFromUrl(url):
   return None
  
 
+def GetShortUrl(self, base_url, playlist_id):
+  """Makes request to Google URL Shortener and returns result.
+  
+  Args:
+    base_url: Base URL for playlist.
+    playlist_id: Playlist id, str.
+  Returns:
+    Short URL, str or None if error.
+  """
+  url = '%s/playlist?p=%s' % (base_url, playlist_id)
+  result = urlfetch.fetch(
+    url=SHORTENER_URL,
+    headers={'Content-Type': 'application/json'},
+    method=urlfetch.POST,
+    payload=simplejson.dumps({'longUrl': url}))
+  if result.status_code == 200:
+    logging.info('Result = %s', result.content)
+    response = simplejson.loads(result.content)
+    return response['id']
+  else:
+    return None
+
+
 class BaseHandler(webapp.RequestHandler):
 
   def __init__(self, desktop_template, mobile_template=None):
@@ -120,46 +144,34 @@ class Player(webapp.RequestHandler):
 			     'link': playlist.link}))
 
 
-class SharingInfo(webapp.RequestHandler):
-  """Returns information related to sharing the playlist."""
-
-  def _GetShortUrl(self, playlist_id):
-    """Makes request to Google URL Shortener and returns result.
-    
-    Args:
-      playlist_id: Playlist id, str.
-    Returns:
-      Short URL, str or None if error.
-    """
-    base_url = self.request.get('baseUrl', 'http://party-box.appspot.com')
-    url = '%s/playlist?p=%s' % (base_url, playlist_id)
-    result = urlfetch.fetch(
-      url=SHORTENER_URL,
-      headers={'Content-Type': 'application/json'},
-      method=urlfetch.POST,
-      payload=simplejson.dumps({'longUrl': url}))
-    if result.status_code == 200:
-      logging.info('Result = %s', result.content)
-      response = simplejson.loads(result.content)
-      return response['id']
-    else:
-      return None
+class SharePlaylist(webapp.RequestHandler):
 
   def get(self):
-    user = users.get_current_user()
-    playlist = model.Playlist.get_or_insert(user.user_id(), owner=user)
-    sharing_info = {}
-    if playlist.link:
-      sharing_info['link'] = playlist.link
+    email = self.request.get('email', None);
+    results = {'success': False}
+    if email is None or not mail.is_email_valid(email):
+      logging.warn('Invalid email:%s', email)
+      results['error'] = 'Invalid address.'
     else:
-      # TODO(nav): Check for error here.
-      short_link = self._GetShortUrl(str(playlist.key()))
-      if short_link is not None:
-	playlist.link = db.Link(short_link)
-	playlist.put()
-      sharing_info['link'] = short_link
-    self.response.out.write(simplejson.dumps(sharing_info))
-
+      user = users.get_current_user()
+      playlist = model.Playlist.get_or_insert(user.user_id(), owner=user)
+      if playlist.link:
+	short_link = playlist.link
+      else:
+	short_link = GetShortUrl('http://party-box.appspot.com',
+	  str(playlist.key()))
+      sender_address = 'PartyBox <noreply@partybox.appspotmail.com>'
+      subject = 'Playlist Invitation'
+      body = """
+Hello %s,\n\n
+%s would like you to check out their playlist on PartyBox. You can add
+songs to the playlist, or vote on existing songs.\n\n
+%s
+""" % (email, user.email(), short_link)
+      mail.send_mail(sender_address, email, subject, body)
+      results['success'] = True
+    self.response.out.write(simplejson.dumps(results))
+ 
 
 class Search(webapp.RequestHandler):
 
@@ -330,7 +342,7 @@ application = webapp.WSGIApplication(
   [('/playlist', PlaylistEditor),
    ('/youtube/search', Search),
    ('/youtube/add', Add),
-   ('/youtube/playlist/sharing', SharingInfo),
+   ('/youtube/playlist/share', SharePlaylist),
    ('/youtube/playlist', Playlist),
    ('/player', Player),
    ('/youtube/player/next', NextSong),

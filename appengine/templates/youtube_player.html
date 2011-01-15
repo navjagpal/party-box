@@ -17,7 +17,6 @@
   <script type="text/javascript">
 
   var ytplayer = null;
-  var shortLink = "{{link}}";
 
   function getVideoUrl(id) {
     return "http://www.youtube.com/v/" + id + "?enablejsapi=1" +
@@ -38,34 +37,13 @@
     // Use long link for the image so that devices can try to do
     // something smart based on the URL.
     var img = document.createElement('img');
-    img.setAttribute('src', getQRCode(shortLink));
+    img.setAttribute('src', getQRCode(longLink));
     img.setAttribute('class', 'qrcodeImg');
     var imgLink = document.createElement('a');
     imgLink.setAttribute('href', longLink);
     imgLink.setAttribute('target', '_blank');
     imgLink.appendChild(img);
     document.getElementById('sharing').appendChild(imgLink);
-
-    var link = document.createElement('a');
-    link.setAttribute('href', shortLink);
-    link.setAttribute('target', '_blank');
-    link.appendChild(document.createTextNode(shortLink));
-    document.getElementById('sharing').appendChild(link);
-  }
-
-  function getSharingInfo() {
-    var req = new XMLHttpRequest();
-    var query = 'baseUrl=' + encodeURIComponent(
-      window.location.protocol + '//' + window.location.host);
-    req.open('GET', '/youtube/playlist/sharing?' + query, true);
-    req.onreadystatechange = function() {
-      if (req.readyState == 4 && req.status == 200) {
-	var response = JSON.parse(req.responseText);
-	shortLink = response.link;
-	setSharingUrl();
-      }
-    }
-    req.send(null);
   }
 
   function onYouTubePlayerReady(playerId) {
@@ -118,15 +96,32 @@
     req.send(null);
   }
 
+  function sharePlaylist() {
+    var email = document.getElementById('email').value;
+    var req = new XMLHttpRequest();
+    var query = 'email=' + encodeURIComponent(email);
+    req.open('GET', '/youtube/playlist/share?' + query, true);
+    req.onreadystatechange = function() {
+      if (req.readyState == 4 && req.status == 200) {
+	var response = JSON.parse(req.responseText);
+	if (response.success == true) {
+	  document.getElementById('emailStatus').innerHTML = 'Done';
+	} else {
+	  document.getElementById('emailStatus').innerHTML = response.error;
+	}
+	setTimeout(function() {
+	  document.getElementById('emailStatus').innerHTML = '';
+	}, 2000);	
+      }
+    };
+    req.send(null);
+  }
+
   $(document).ready(function() {
     adjustSize();
+    setSharingUrl();
     $(window).bind('resize', adjustSize);
     playNextSong();
-    if (shortLink == "None") {
-      getSharingInfo();
-    } else {
-      setSharingUrl();
-    }
   });
 
   window.onload = function() {
@@ -163,6 +158,12 @@
       </div>
       <div id="rightContent">
         <div>
+	  <div>
+	    <span>Email:</span>
+	    <input id="email" type="text"/>
+	    <button type="button" onclick="javascript:sharePlaylist()">Share Playlist</button>
+	    <span id="emailStatus"></span>
+	  </div>
           <div id="sharing"></div>
         </div>
         <div id="adsense"></div>

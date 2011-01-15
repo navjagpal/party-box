@@ -282,6 +282,10 @@ ul.topMenuItems {
   width: 23%;
   float: right;
 }
+#sharing {
+  padding-right: 8px;
+  padding-top: 5px;
+}
 #currSongTitle {
   margin: 5px;
   color: #fff;
