@@ -160,7 +160,7 @@ class SharePlaylist(webapp.RequestHandler):
       else:
 	short_link = GetShortUrl('http://party-box.appspot.com',
 	  str(playlist.key()))
-      sender_address = 'PartyBox <noreply@partybox.appspotmail.com>'
+      sender_address = 'PartyBox <noreply@party-box.appspotmail.com>'
       subject = 'Playlist Invitation'
       body = """
 Hello %s,\n\n
