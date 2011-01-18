@@ -140,7 +140,11 @@ class Player(webapp.RequestHandler):
     playlist = model.Playlist.get_or_insert(user.user_id(), owner=user)
     path = os.path.join(os.path.dirname(__file__),
       'templates/youtube_player.html')
-    token = channel.create_channel(user.user_id())
+    token = memcache.get('token:%s' % user.user_id())
+    if token is None:
+      token = channel.create_channel(user.user_id())
+      # Tokens are good for a max of 2 hours.
+      memcache.add('token:%s' % user.user_id(), token, 3600*2)
     self.response.out.write(
       template.render(path, {'playlist': str(playlist.key()),
 			     'link': playlist.link,
