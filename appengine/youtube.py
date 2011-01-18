@@ -9,6 +9,7 @@ from django.utils import simplejson
 import gdata.youtube
 import gdata.youtube.service
 
+from google.appengine.api import channel
 from google.appengine.api import mail
 from google.appengine.api import memcache
 from google.appengine.api import urlfetch
@@ -139,9 +140,11 @@ class Player(webapp.RequestHandler):
     playlist = model.Playlist.get_or_insert(user.user_id(), owner=user)
     path = os.path.join(os.path.dirname(__file__),
       'templates/youtube_player.html')
+    token = channel.create_channel(user.user_id())
     self.response.out.write(
       template.render(path, {'playlist': str(playlist.key()),
-			     'link': playlist.link}))
+			     'link': playlist.link,
+			     'token': token}))
 
 
 class SharePlaylist(webapp.RequestHandler):
@@ -347,12 +350,29 @@ class RandomPopularSong(webapp.RequestHandler):
     self.response.out.write(simplejson.dumps(result))
 
 
+class RemoteControl(webapp.RequestHandler):
+  """Provides remote control operations for the player."""
+
+  def get(self):
+    # This simply forwards the "op" parameter to the player.
+    user = users.get_current_user()
+    op = self.request.get('op', None)
+    success = False
+    if op is not None:
+      success = True
+      channel.send_message(
+	user.user_id(), simplejson.dumps({'op': op}))
+    self.response.out.write(
+      simplejson.dumps({'success': success}))
+
+
 application = webapp.WSGIApplication(
   [('/playlist', PlaylistEditor),
    ('/youtube/search', Search),
    ('/youtube/add', Add),
    ('/youtube/playlist/share', SharePlaylist),
    ('/youtube/playlist', Playlist),
+   ('/youtube/remote', RemoteControl),
    ('/player', Player),
    ('/youtube/player/next', NextSong),
    ('/youtube/player/randomsong', RandomPopularSong)], debug=True)

@@ -4,6 +4,8 @@
 
   <link rel="stylesheet" type="text/css"
     href="/static/style.css" title="default"/>
+  
+  <script src="/_ah/channel/jsapi"></script>
 
   <script type="text/javascript"
     src="/static/jquery-1.4.2.min.js"></script>
@@ -117,6 +119,37 @@
     req.send(null);
   }
 
+  function onChannelMessage(message) {
+    request = JSON.parse(message.data);
+    switch (request.op) {
+      case 'pause':
+	ytplayer.pauseVideo();	
+	break;
+      case 'play':
+	ytplayer.playVideo();
+	break;
+      case 'next':
+	playNextSong();
+	break;
+      case 'vup':
+	if (ytplayer.getVolume() > 90) {
+	  ytplayer.setVolume(100);
+	} else {
+	  ytplayer.setVolume(
+	    ytplayer.getVolume() + 10);
+	}
+	break;
+      case 'vdown':
+	if (ytplayer.getVolume() < 10) {
+	  ytplayer.setVolume(0);
+	} else {
+	  ytplayer.setVolume(
+	    ytplayer.getVolume() - 10);
+	}
+	break;
+    }
+  }
+
   $(document).ready(function() {
     adjustSize();
     setSharingUrl();
@@ -130,6 +163,10 @@
     // here to avoid everyone making this request at the same time.
     setInterval(function() { doGetPlaylist("{{playlist}}"); },
       30000);
+
+    channel = new goog.appengine.Channel('{{ token }}');
+    socket = channel.open();
+    socket.onmessage = onChannelMessage;
   }
   </script>
 </head>
