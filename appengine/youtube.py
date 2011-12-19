@@ -68,7 +68,7 @@ def GetIdFromUrl(url):
   return None
  
 
-def GetShortUrl(self, base_url, playlist_id):
+def GetShortUrl(base_url, playlist_id):
   """Makes request to Google URL Shortener and returns result.
   
   Args:
