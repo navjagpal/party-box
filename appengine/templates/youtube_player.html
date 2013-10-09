@@ -1,4 +1,3 @@
-<html>
 <head>
   <title>PartyBox::Player</title>
 
@@ -13,23 +12,34 @@
   <script type="text/javascript"
     src="/static/partybox.js"></script>
 
-  <script type="text/javascript"
-    src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
-
   <script type="text/javascript">
 
   var ytplayer = null;
 
+  // This code loads the IFrame Player API code asynchronously.
+  var tag = document.createElement('script');
+
+  tag.src = "https://www.youtube.com/iframe_api";
+  var firstScriptTag = document.getElementsByTagName('script')[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+  // This function creates an <iframe> (and YouTube player)
+  // after the API code downloads.
+  function onYouTubeIframeAPIReady() {
+    ytplayer = new YT.Player('playback', {
+	    height: getHeight(),
+	    width: getWidth(),
+	    events: {
+		    'onReady': onYouTubePlayerReady,
+		    'onStateChange': onYouTubeStateChange,
+                    'onError': onYouTubeError
+	    }
+    });
+  }
+
   function getVideoUrl(id) {
     return "http://www.youtube.com/v/" + id + "?enablejsapi=1" +
       "&playerapiid=ytplayer";
-  }
-
-  function setupYouTubePlayer(id) {
-    var params = { allowScriptAccess: "always" };
-    var atts = { id: "ytplayerObj" };
-    swfobject.embedSWF(getVideoUrl(id), "playback", getWidth(),
-      getHeight(), "8", null, null, params, atts);
   }
 
   function setSharingUrl() {
@@ -48,15 +58,12 @@
     document.getElementById('sharing').appendChild(imgLink);
   }
 
-  function onYouTubePlayerReady(playerId) {
-    ytplayer = document.getElementById('ytplayerObj');
-    ytplayer.playVideo();
-    ytplayer.addEventListener("onStateChange", "onYouTubeStateChange");
-    ytplayer.addEventListener("onError", "onYouTubeError");
+  function onYouTubePlayerReady(event) {
+    playNextSong();
   }
 
-  function onYouTubeStateChange(newState) {
-    if (newState == 0) {
+  function onYouTubeStateChange(event) {
+    if (event.data == YT.PlayerState.ENDED) {
       playNextSong();
     }
   }
@@ -81,11 +88,7 @@
     req.onreadystatechange = function() {
       if (req.readyState == 4 && req.status == 200) {
         var response = JSON.parse(req.responseText);
-        if (ytplayer == null) {
-          setupYouTubePlayer(response.id);
-        } else {
-          ytplayer.loadVideoByUrl(getVideoUrl(response.id));
-        }
+        ytplayer.loadVideoByUrl(getVideoUrl(response.id));
 
         setCurrentSongTitle(response.title);
 
@@ -154,7 +157,6 @@
     adjustSize();
     setSharingUrl();
     $(window).bind('resize', adjustSize);
-    playNextSong();
   });
 
   window.onload = function() {
