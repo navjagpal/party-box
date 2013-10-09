@@ -1,10 +1,10 @@
+import json
 import logging
 import model
 import os
 import random
 import re
-
-from django.utils import simplejson
+import webapp2
 
 import gdata.youtube
 import gdata.youtube.service
@@ -15,7 +15,6 @@ from google.appengine.api import memcache
 from google.appengine.api import urlfetch
 from google.appengine.api import users
 from google.appengine.ext import db
-from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 
@@ -82,19 +81,20 @@ def GetShortUrl(base_url, playlist_id):
     url=SHORTENER_URL,
     headers={'Content-Type': 'application/json'},
     method=urlfetch.POST,
-    payload=simplejson.dumps({'longUrl': url}))
+    payload=json.dumps({'longUrl': url}))
   if result.status_code == 200:
     logging.info('Result = %s', result.content)
-    response = simplejson.loads(result.content)
+    response = json.loads(result.content)
     return response['id']
   else:
     return None
 
 
-class BaseHandler(webapp.RequestHandler):
+class BaseHandler(webapp2.RequestHandler):
 
-  def __init__(self, desktop_template, mobile_template=None):
-    super(BaseHandler, self).__init__()
+  def __init__(self, request=None, response=None,
+               desktop_template=None, mobile_template=None):
+    super(BaseHandler, self).__init__(request, response)
     self._desktop_template = desktop_template
     self._mobile_template = mobile_template
  
@@ -114,8 +114,9 @@ class BaseHandler(webapp.RequestHandler):
 
 class PlaylistEditor(BaseHandler):
 
-  def __init__(self):
+  def __init__(self, request=None, response=None):
     super(PlaylistEditor, self).__init__(
+      request, response,
       'templates/youtube_playlist.html',
       'templates/youtube_playlist_mobile.html')
 
@@ -133,7 +134,7 @@ class PlaylistEditor(BaseHandler):
     self._WriteResponse({'playlist': playlist_key})
 
 
-class Player(webapp.RequestHandler):
+class Player(webapp2.RequestHandler):
 
   def get(self):
     user = users.get_current_user()
@@ -151,7 +152,7 @@ class Player(webapp.RequestHandler):
 			     'token': token}))
 
 
-class SharePlaylist(webapp.RequestHandler):
+class SharePlaylist(webapp2.RequestHandler):
 
   def get(self):
     email = self.request.get('email', None);
@@ -177,10 +178,10 @@ songs to the playlist, or vote on existing songs.\n\n
 """ % (email, user.email(), short_link)
       mail.send_mail(sender_address, email, subject, body)
       results['success'] = True
-    self.response.out.write(simplejson.dumps(results))
+    self.response.out.write(json.dumps(results))
  
 
-class Search(webapp.RequestHandler):
+class Search(webapp2.RequestHandler):
 
   def get(self):
     query = self.request.get('q', None)
@@ -210,12 +211,12 @@ class Search(webapp.RequestHandler):
         thumbnails = [x.url for x in entry.media.thumbnail]
         results.append({'title': title, 'id': id,
                         'thumbnails': thumbnails})
-      results = simplejson.dumps(results)
+      results = json.dumps(results)
       memcache.add('youtube-search:%s' % query, results)
     self.response.out.write(results)
 
 
-class Add(webapp.RequestHandler):
+class Add(webapp2.RequestHandler):
 
   def get(self):
     id = self.request.get('id', None)
@@ -240,7 +241,7 @@ class Add(webapp.RequestHandler):
     if query.fetch(1):
       logging.info('User %s already voted for %s in playlist %s, not counting.',
                    user, id, playlist_key)
-      self.response.out.write(simplejson.dumps(
+      self.response.out.write(json.dumps(
         {'added': False, 'message': 'Already voted for this song.'}))
     else:
       model.YouTubeVideo.get_or_insert(
@@ -255,7 +256,7 @@ class Add(webapp.RequestHandler):
 		'count': model.get_count(GetCounterName(
 		  playlist, id)), 'voted': True }
 
-      self.response.out.write(simplejson.dumps(
+      self.response.out.write(json.dumps(
 	{'added': True, 'entry': entry}))
 
 
@@ -286,7 +287,7 @@ def GetSortedPlaylist(playlist):
   return results
 
 
-class Playlist(webapp.RequestHandler):
+class Playlist(webapp2.RequestHandler):
 
   def get(self):
     playlist_key = self.request.get('p', None)
@@ -297,10 +298,10 @@ class Playlist(webapp.RequestHandler):
       playlist_key = str(playlist.key())
 
     results = GetSortedPlaylist(playlist_key)
-    self.response.out.write(simplejson.dumps(results))
+    self.response.out.write(json.dumps(results))
 
 
-class NextSong(webapp.RequestHandler):
+class NextSong(webapp2.RequestHandler):
 
   def get(self):
     user = users.get_current_user()
@@ -328,10 +329,10 @@ class NextSong(webapp.RequestHandler):
                 'thumbnails': video.thumbnails,
 		'nowPlaying': True,
 		'count': songs[0]['count']}
-      self.response.out.write(simplejson.dumps(result))
+      self.response.out.write(json.dumps(result))
 
 
-class RandomPopularSong(webapp.RequestHandler):
+class RandomPopularSong(webapp2.RequestHandler):
   """Provides a random popular YouTube video.
 
   This is so we can offer a song even if the playlist is empty. There should
@@ -351,10 +352,10 @@ class RandomPopularSong(webapp.RequestHandler):
               'title': entry.media.title.text,
 	      'random': True,
               'thumbnails': [x.url for x in entry.media.thumbnail]}
-    self.response.out.write(simplejson.dumps(result))
+    self.response.out.write(json.dumps(result))
 
 
-class RemoteControl(webapp.RequestHandler):
+class RemoteControl(webapp2.RequestHandler):
   """Provides remote control operations for the player."""
 
   def get(self):
@@ -365,12 +366,12 @@ class RemoteControl(webapp.RequestHandler):
     if op is not None:
       success = True
       channel.send_message(
-	user.user_id(), simplejson.dumps({'op': op}))
+	user.user_id(), json.dumps({'op': op}))
     self.response.out.write(
-      simplejson.dumps({'success': success}))
+      json.dumps({'success': success}))
 
 
-application = webapp.WSGIApplication(
+application = webapp2.WSGIApplication(
   [('/playlist', PlaylistEditor),
    ('/youtube/search', Search),
    ('/youtube/add', Add),
@@ -382,9 +383,9 @@ application = webapp.WSGIApplication(
    ('/youtube/player/randomsong', RandomPopularSong)], debug=True)
 
 
-def main():
-  run_wsgi_app(application)
+#def main():
+#  run_wsgi_app(application)
 
 
-if __name__ == '__main__':
-  main()
+#if __name__ == '__main__':
+#  main()
