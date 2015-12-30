@@ -1,3 +1,14 @@
+// Upon loading, the Google APIs JS client automatically invokes this callback.
+googleApiClientReady = function() {
+  console.log('ApiClientReady');
+  // Load the client interfaces for the YouTube Analytics and Data APIs, which
+  // are required to use the Google APIs JS client. More info is available at
+  // https://developers.google.com/api-client-library/javascript/dev/dev_jscript#loading-the-client-library-and-the-api
+  gapi.client.load('youtube', 'v3', function() {
+    console.log('YouTube API loaded');
+  });
+}
+
 function doGetPlaylist(playlist) {
   var req = new XMLHttpRequest();
   var query = 'p=' + encodeURIComponent(playlist);
@@ -135,35 +146,39 @@ function getQRCode(url) {
 }
 
 function ytsearch(playlist, query) {
-  var ytUrl = 'http://gdata.youtube.com/feeds/api/videos?q=' +
-    encodeURIComponent(query) + '&format=5&v=2&alt=jsonc&category=Music&max_results=10' +
-    '&orderBy=relevance';
-  $.ajax({
-    type: "GET",
-    url: ytUrl,
-    dataType: "jsonp",
-    success: function (responseData, textStatus, XMLHttpRequest) {
-      if (responseData.data.items) {
-	displayVids(playlist, responseData.data.items);
-	} else {
-	// TODO: no video results
-      }
+  var request = gapi.client.youtube.search.list({
+    key: 'AIzaSyA8OdrL9Xh0ebjKWOMVrnzRP_pw9TaTuws',
+    q: query,
+    videoCategoryId: 10,
+    type: 'video',
+    part: 'id,snippet'
+  });
+  request.execute(function(response) {
+    console.log(JSON.stringify(response.result));
+    console.log('Result length:' + response.result.items.length);
+    $("#vid-results").empty();
+    for (var i = 0; i < response.result.items.length; i++) {
+      var item = response.result.items[i];
+      var title = item.snippet.title;
+      var videoId = item.id.videoId;
+      var thumbnail = item.snippet.thumbnails.default.url;
+      var vid = document.createElement('div');
+      vid.setAttribute('class', 'vid-item');
+      vid.addEventListener('click', function() {
+        queueSong(playlist, videoId, title, thumbnail);
+        $('#vid-results').hide(); 
+      });
+      var thumbnailImage = document.createElement('img');
+      thumbnailImage.setAttribute('class', 'vid-img');
+      thumbnailImage.setAttribute('src', thumbnail);
+      vid.appendChild(thumbnailImage);
+      var titleSpan = document.createElement('span');
+      titleSpan.setAttribute('class', 'vid-title');
+      titleSpan.appendChild(document.createTextNode(title));
+      vid.appendChild(titleSpan);
+      $('#vid-results').append(vid);
     }
   });
-}
-
-function displayVids(playlist, vids) {
-  $("#vid-results").empty();
-  var vlength = Math.min(vids.length, 10);
-  for (var vIdx=0; vIdx<vlength; vIdx++) {
-    //var vidItem = $("<div onclick='loadVideo(\""+vids[vIdx].id+"\")' class='vid-item'>");
-    var title = vids[vIdx].title;
-    title = escape(title);
-    var vidItem = $("<div onclick='queueSong(\""+playlist+"\", \""+vids[vIdx].id+"\", \""+title+"\", \""+vids[vIdx].thumbnail.sqDefault+"\");$(\"#vid-results\").hide();' class='vid-item'>");
-    vidItem.append($("<img class='vid-img'>").attr("src", vids[vIdx].thumbnail.sqDefault));
-    vidItem.append($("<span class='vid-title'>"+vids[vIdx].title+"</span>"));
-    $("#vid-results").append(vidItem);
-  }
 }
 
 function queueSong(playlist, id, title, thumbnail) {
