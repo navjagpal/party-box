@@ -6,8 +6,7 @@ import random
 import re
 import webapp2
 
-import gdata.youtube
-import gdata.youtube.service
+from apiclient.discovery import build
 
 from google.appengine.api import channel
 from google.appengine.api import mail
@@ -18,6 +17,10 @@ from google.appengine.ext import db
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 
+
+DEVELOPER_KEY = 'AIzaSyD84qEsks2LqCkANQGkAG9YupL5Z64_oto'
+YOUTUBE_API_SERVICE_NAME = 'youtube'
+YOUTUBE_API_VERSION = 'v3'
 
 SHORTENER_URL = ('https://www.googleapis.com/urlshortener/v1/url'
 		 '?key=AIzaSyA8OdrL9Xh0ebjKWOMVrnzRP_pw9TaTuws')
@@ -48,24 +51,13 @@ def GetIdFromCounterName(playlist_key, counter_name):
   """ 
   if not isinstance(playlist_key, (str, unicode)):
     playlist_key = str(playlist_key.key())
-  logging.info('Key = %s', playlist_key)
   return counter_name.split(playlist_key, 1)[1]
 
 
 def GetYouTubeService():
-  yt_service = gdata.youtube.service.YouTubeService()
-  yt_service.developer_key = ('AI39si6ZT0-zdQXj2cYiOeF5ccTbYN5Ve4pJ0GbN6QhCV'
-                              'KnTZvb-VpYfioFXeyGCjs-dHpCTQPjhwLY7xS2T_P_E1X'
-                              'YHUMv2fQ')
-  return yt_service
+  return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
+    developerKey=DEVELOPER_KEY)
 
-
-def GetIdFromUrl(url):
-  m = re.match('http://[^\/]+\/v\/([^?]+)', url)
-  if m:
-    return m.group(1)
-  return None
- 
 
 def GetShortUrl(base_url, playlist_id):
   """Makes request to Google URL Shortener and returns result.
@@ -164,9 +156,9 @@ class SharePlaylist(webapp2.RequestHandler):
       user = users.get_current_user()
       playlist = model.Playlist.get_or_insert(user.user_id(), owner=user)
       if playlist.link:
-	short_link = playlist.link
+	      short_link = playlist.link
       else:
-	short_link = GetShortUrl('http://party-box.appspot.com',
+	      short_link = GetShortUrl('http://party-box.appspot.com',
 	  str(playlist.key()))
       sender_address = 'PartyBox <noreply@party-box.appspotmail.com>'
       subject = 'Playlist Invitation'
@@ -191,28 +183,26 @@ class Search(webapp2.RequestHandler):
     results = memcache.get('youtube-search:%s' % query)
     if results is None:
       yt_service = GetYouTubeService()
-      yt_query = gdata.youtube.service.YouTubeVideoQuery()
-      yt_query.vq = query
-      yt_query.orderby = 'relevance'
-      yt_query.racy = 'include'
-      yt_query.categories.append('/Music')
-      feed = yt_service.YouTubeQuery(yt_query)
+      search_response = yt_service.search().list(
+        q=query,
+        order='relevance',
+        type='video',
+        maxResults=50,
+        videoCategoryId=10,
+        part='id,snippet'
+      ).execute()
+      feed = search_response.get('items', [])
     
       results = []
-      for entry in feed.entry:
-        title = entry.media.title.text
-	if not entry.GetSwfUrl():
-	  continue
-        id = GetIdFromUrl(entry.GetSwfUrl())
-	if not id:
-	  logging.warn('Problem getting ID from URL %s',
-		       entry.GetSwfUrl())
-	  continue
-        thumbnails = [x.url for x in entry.media.thumbnail]
-        results.append({'title': title, 'id': id,
-                        'thumbnails': thumbnails})
+      for entry in feed:
+        result = {'id': entry['id']['videoId'],
+                  'title': entry['snippet']['title'],
+                  'thumbnails': [entry['snippet']['thumbnails']['default']['url']]}
+        results.append(result)
+        
       results = json.dumps(results)
       memcache.add('youtube-search:%s' % query, results)
+
     self.response.out.write(results)
 
 
@@ -343,15 +333,21 @@ class RandomPopularSong(webapp2.RequestHandler):
     feed = memcache.get('popular-youtube-feed')
     if feed is None:
       yt_service = GetYouTubeService()
-      feed = yt_service.GetYouTubeVideoFeed(
-        'http://gdata.youtube.com/feeds/api/videos/-/Music/?orderby=viewCount')
+      search_response = yt_service.search().list(
+        order='viewCount',
+        type='video',
+        maxResults=50,
+        videoCategoryId=10,
+        part='id,snippet'
+      ).execute()
+      feed = search_response.get('items', [])
       memcache.add('popular-youtube-feed', feed)
   
-    entry = random.choice(feed.entry)  
-    result = {'id': GetIdFromUrl(entry.GetSwfUrl()),
-              'title': entry.media.title.text,
-	      'random': True,
-              'thumbnails': [x.url for x in entry.media.thumbnail]}
+    entry = random.choice(feed)
+    result = {'id': entry['id']['videoId'],
+              'title': entry['snippet']['title'],
+	            'random': True,
+              'thumbnails': [entry['snippet']['thumbnails']['default']['url']]}
     self.response.out.write(json.dumps(result))
 
 
@@ -379,13 +375,6 @@ application = webapp2.WSGIApplication(
    ('/youtube/playlist', Playlist),
    ('/youtube/remote', RemoteControl),
    ('/player', Player),
+   ('/', Player),
    ('/youtube/player/next', NextSong),
    ('/youtube/player/randomsong', RandomPopularSong)], debug=True)
-
-
-#def main():
-#  run_wsgi_app(application)
-
-
-#if __name__ == '__main__':
-#  main()
